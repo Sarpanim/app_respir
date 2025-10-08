@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { supabase } from '../integrations/supabase/client';
+import { supabase } from '../src/integrations/supabase/client';
 import { MailIcon, FacebookIcon, XMarkIcon } from './Icons';
 
 const Auth: React.FC = () => {
