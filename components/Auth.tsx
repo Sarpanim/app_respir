@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { MailIcon, GoogleIcon, FacebookIcon, XMarkIcon } from './Icons';
+import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
+import { MailIcon, FacebookIcon, XMarkIcon } from './Icons';
 
 const Auth: React.FC = () => {
-    const { login } = useAppContext();
+    const { login, updateUser } = useAppContext();
     const [showEmailForm, setShowEmailForm] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
 
     const ADMIN_EMAIL = 'olivier.heqa@gmail.com';
 
@@ -17,34 +17,64 @@ const Auth: React.FC = () => {
         text: string;
         onClick: () => void;
         className: string;
-        disabled?: boolean;
-    }> = ({ icon, text, onClick, className, disabled }) => (
+    }> = ({ icon, text, onClick, className }) => (
         <button
             onClick={onClick}
-            disabled={disabled}
-            className={`w-full flex items-center justify-center gap-3 py-3 px-4 rounded-full text-lg font-semibold transition-transform transform hover:scale-105 shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${className}`}
+            className={`w-full flex items-center justify-center gap-3 py-3 px-4 rounded-full text-lg font-semibold transition-transform transform hover:scale-105 shadow-md ${className}`}
         >
             {icon}
             <span>{text}</span>
         </button>
     );
 
-    const handleGoogleLogin = async () => {
-        setIsLoading(true);
+    const decodeJWT = (token: string) => {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (error) {
+            console.error('Error decoding JWT:', error);
+            return null;
+        }
+    };
+
+    const handleGoogleSuccess = (credentialResponse: CredentialResponse) => {
         setError('');
         
-        try {
-            // Simulate Google OAuth flow with a delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Auto-login as admin for demo
-            login();
-            
-        } catch (err) {
+        if (!credentialResponse.credential) {
             setError('Erreur lors de la connexion avec Google');
-        } finally {
-            setIsLoading(false);
+            return;
         }
+
+        const decoded = decodeJWT(credentialResponse.credential);
+        
+        if (!decoded || !decoded.email) {
+            setError('Impossible de récupérer les informations de votre compte Google');
+            return;
+        }
+
+        console.log('Google login attempt with email:', decoded.email);
+
+        // Check if the email is the admin email
+        if (decoded.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+            // Update user with Google info
+            updateUser({
+                email: decoded.email,
+                name: decoded.name || 'Olivier Heqa',
+                avatar: decoded.picture || `https://i.pravatar.cc/150?u=${decoded.email}`,
+                linkedAccounts: { google: true, facebook: false, apple: false }
+            });
+            login();
+        } else {
+            setError(`Accès refusé. Seul l'administrateur (${ADMIN_EMAIL}) peut se connecter. Vous avez essayé avec: ${decoded.email}`);
+        }
+    };
+
+    const handleGoogleError = () => {
+        setError('Erreur lors de la connexion avec Google. Vérifiez que le Client ID Google OAuth est correctement configuré.');
     };
 
     const handleFacebookLogin = () => {
@@ -55,23 +85,25 @@ const Auth: React.FC = () => {
         e.preventDefault();
         setError('');
         
-        // Validate email format
         if (!email || !email.includes('@')) {
             setError('Veuillez entrer une adresse email valide');
             return;
         }
         
-        // Validate password
         if (!password || password.length < 6) {
             setError('Le mot de passe doit contenir au moins 6 caractères');
             return;
         }
 
-        // Only allow admin email
         if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+            updateUser({
+                email: email,
+                name: 'Olivier Heqa',
+                linkedAccounts: { google: false, facebook: false, apple: false }
+            });
             login();
         } else {
-            setError('Accès refusé. Seul l\'administrateur peut se connecter.');
+            setError(`Accès refusé. Seul l'administrateur (${ADMIN_EMAIL}) peut se connecter.`);
         }
     };
 
@@ -186,13 +218,18 @@ const Auth: React.FC = () => {
                     
                     <div className="text-center text-gray-500 dark:text-gray-400 my-2">Or use social media</div>
 
-                    <AuthButton
-                        icon={isLoading ? <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <GoogleIcon className="w-6 h-6" />}
-                        text={isLoading ? "Connexion..." : "Sign up with Google"}
-                        onClick={handleGoogleLogin}
-                        className="bg-white text-gray-700 border border-gray-200"
-                        disabled={isLoading}
-                    />
+                    <div className="w-full flex justify-center">
+                        <GoogleLogin
+                            onSuccess={handleGoogleSuccess}
+                            onError={handleGoogleError}
+                            useOneTap={false}
+                            theme="filled_blue"
+                            size="large"
+                            text="continue_with"
+                            shape="pill"
+                            width="384"
+                        />
+                    </div>
 
                     <AuthButton
                         icon={<FacebookIcon className="w-6 h-6" />}
@@ -205,9 +242,10 @@ const Auth: React.FC = () => {
                         Already have an account? <button onClick={() => setShowEmailForm(true)} className="font-bold text-accent hover:underline">Log In!</button>
                     </p>
 
-                    <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-2">
-                        Démo : Cliquez sur Google pour vous connecter en tant qu'admin
-                    </p>
+                    <div className="text-center text-xs text-gray-500 dark:text-gray-400 mt-2 space-y-1">
+                        <p>Accès réservé à l'administrateur ({ADMIN_EMAIL})</p>
+                        <p className="text-[10px]">Pour tester: utilisez l'email ci-dessus avec n'importe quel mot de passe (6+ caractères)</p>
+                    </div>
                 </div>
             </div>
         </div>
