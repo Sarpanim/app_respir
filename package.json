@@ -17,6 +17,7 @@
     "uuid": "latest"
   },
   "devDependencies": {
+    "@dyad-sh/react-vite-component-tagger": "^0.8.0",
     "@types/node": "latest",
     "@vitejs/plugin-react": "^5.0.4",
     "typescript": "~5.9.3",
