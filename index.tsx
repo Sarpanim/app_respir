@@ -16,13 +16,13 @@ if (!GOOGLE_CLIENT_ID) {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <ThemeProvider>
-        <AppProvider>
+      <AppProvider>
+        <ThemeProvider>
           <CourseProvider>
             <App />
           </CourseProvider>
-        </AppProvider>
-      </ThemeProvider>
+        </ThemeProvider>
+      </AppProvider>
     </GoogleOAuthProvider>
   </React.StrictMode>
 );
