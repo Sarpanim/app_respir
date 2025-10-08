@@ -34,25 +34,11 @@ const Auth: React.FC = () => {
         setError('');
         
         try {
-            // Simulate Google OAuth flow
-            // In production, this would redirect to Google's OAuth page
-            // For demo purposes, we'll show a prompt
-            const userEmail = prompt('Entrez votre email Google pour la démo:');
-            
-            if (!userEmail) {
-                setIsLoading(false);
-                return;
-            }
-
-            // Simulate API call delay
+            // Simulate Google OAuth flow with a delay
             await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // Only allow admin email
-            if (userEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-                login();
-            } else {
-                setError('Accès refusé. Seul l\'administrateur peut se connecter.');
-            }
+            
+            // Auto-login as admin for demo
+            login();
             
         } catch (err) {
             setError('Erreur lors de la connexion avec Google');
@@ -135,7 +121,7 @@ const Auth: React.FC = () => {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="w-full px-4 py-3 bg-white/50 dark:bg-black/30 border border-black/20 dark:border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-                                    placeholder="votre@email.com"
+                                    placeholder="olivier.heqa@gmail.com"
                                     required
                                 />
                             </div>
@@ -201,8 +187,8 @@ const Auth: React.FC = () => {
                     <div className="text-center text-gray-500 dark:text-gray-400 my-2">Or use social media</div>
 
                     <AuthButton
-                        icon={<GoogleIcon className="w-6 h-6" />}
-                        text="Sign up with Google"
+                        icon={isLoading ? <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <GoogleIcon className="w-6 h-6" />}
+                        text={isLoading ? "Connexion..." : "Sign up with Google"}
                         onClick={handleGoogleLogin}
                         className="bg-white text-gray-700 border border-gray-200"
                         disabled={isLoading}
@@ -220,7 +206,7 @@ const Auth: React.FC = () => {
                     </p>
 
                     <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-2">
-                        Accès réservé à l'administrateur
+                        Démo : Cliquez sur Google pour vous connecter en tant qu'admin
                     </p>
                 </div>
             </div>
