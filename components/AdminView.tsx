@@ -1,7 +1,5 @@
-
-
 import React from 'react';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '../context/AppContext';
 import { 
     ChevronLeftIcon, UserGroupIcon, BookOpenIcon, TagIcon, SoundWaveIcon,
     CreditCardIcon, ChartBarIcon, ChatBubbleLeftRightIcon, MegaphoneIcon,
@@ -10,7 +8,7 @@ import {
     ClipboardDocumentListIcon, PaintBrushIcon, HomeIcon, PhotoIcon,
     ChatBubbleOvalLeftEllipsisIcon, QuestionMarkCircleIcon, ShieldCheckIcon, ListBulletIcon,
     ImageIcon, DevicePhoneMobileIcon, MapIcon
-} from '../Icons';
+} from './Icons';
 // FIX: Import AdminSubscriptionTracking to handle the 'subscriptions' view.
 import AdminSubscriptionTracking from './admin/AdminSubscriptionTracking';
 import AdminInvoiceManagement from './admin/AdminInvoiceManagement';

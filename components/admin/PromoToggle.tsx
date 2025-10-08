@@ -1,42 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { CheckCircleIcon } from '../Icons';
+import DynamicIcon from '../DynamicIcon';
 
 interface PromoToggleProps {
-  initialActive: boolean;
-  expired: boolean;
-  onToggle: (newValue: boolean) => void;
+    planName: string;
+    planIcon: string;
+    planIconColor: string;
+    isSelected: boolean;
+    onToggle: () => void;
 }
 
-const PromoToggle: React.FC<PromoToggleProps> = ({ initialActive, expired, onToggle }) => {
-  const [isActive, setIsActive] = useState(initialActive);
-
-  // Sync internal state with prop changes to ensure consistency
-  useEffect(() => {
-    setIsActive(initialActive);
-  }, [initialActive]);
-
-  const handleToggle = () => {
-    if (expired) return;
-    const newValue = !isActive;
-    setIsActive(newValue); // Immediate visual feedback
-    onToggle(newValue); // Notify parent component of the change
-  };
-
-  const bgColor = isActive ? 'bg-green-500' : 'bg-gray-400';
-  const disabledClasses = 'disabled:opacity-50 disabled:cursor-not-allowed';
-
-  return (
-    <button
-      onClick={handleToggle}
-      disabled={expired}
-      className={`relative inline-flex flex-shrink-0 items-center h-6 rounded-full w-11 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-light-bg dark:focus:ring-offset-dark-bg focus:ring-accent ${bgColor} ${disabledClasses}`}
-      aria-pressed={isActive}
-      aria-label={isActive ? 'Désactiver le code promo' : 'Activer le code promo'}
-    >
-      <span
-        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-300 ${isActive ? 'translate-x-6' : 'translate-x-1'}`}
-      />
-    </button>
-  );
+const PromoToggle: React.FC<PromoToggleProps> = ({ planName, planIcon, planIconColor, isSelected, onToggle }) => {
+    return (
+        <button
+            onClick={onToggle}
+            className={`relative p-3 rounded-lg border-2 transition-all duration-200 w-full text-left ${
+                isSelected ? 'border-accent bg-accent/10' : 'border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-black/20'
+            }`}
+        >
+            <div className="flex items-center gap-3">
+                <DynamicIcon icon={planIcon} className="w-6 h-6" style={{ color: planIconColor }} />
+                <span className="font-semibold text-sm">{planName}</span>
+            </div>
+            {isSelected && (
+                <div className="absolute -top-2 -right-2 bg-accent text-white rounded-full">
+                    <CheckCircleIcon className="w-5 h-5" />
+                </div>
+            )}
+        </button>
+    );
 };
 
 export default PromoToggle;

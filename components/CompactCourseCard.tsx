@@ -3,27 +3,30 @@ import { Course } from '../types';
 import { useAppContext } from '../context/AppContext';
 import { ClockIcon, StarIcon } from './Icons';
 
-const CompactCourseCard: React.FC<{ course: Course }> = ({ course }) => {
-    const { navigateToPlayer } = useAppContext();
-    const totalDurationMinutes = Math.round(course.sections.reduce((total, section) => total + section.lessons.reduce((secTotal, lesson) => secTotal + lesson.duration, 0), 0) / 60);
+interface CompactCourseCardProps {
+    course: Course;
+}
+
+const CompactCourseCard: React.FC<CompactCourseCardProps> = ({ course }) => {
+    const { navigateTo } = useAppContext();
 
     return (
-        <div
-            onClick={() => navigateToPlayer(course.id)}
-            className="bg-white/30 dark:bg-dark-card backdrop-filter backdrop-blur-xl border border-white/20 dark:border-transparent rounded-2xl p-3 flex items-center gap-4 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer"
+        <div 
+            onClick={() => navigateTo('player', { courseId: course.id })}
+            className="flex items-center gap-4 p-3 bg-white/50 dark:bg-black/20 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer border border-white/20 dark:border-black/30"
         >
-            <img src={course.image.url} alt={course.title} className="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
-            <div className="flex-grow overflow-hidden">
-                <h3 className="text-md font-bold font-elsie truncate">{course.title}</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{course.level}</p>
-                <div className="flex items-center gap-4 mt-2 text-xs text-gray-500 dark:text-gray-300">
+            <img src={course.image.url} alt={course.image.alt} className="w-20 h-20 rounded-lg object-cover" />
+            <div className="flex-grow">
+                <h4 className="font-bold text-gray-800 dark:text-white">{course.title}</h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{course.mentor.name}</p>
+                <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mt-1">
                     <div className="flex items-center gap-1">
-                        <ClockIcon className="w-4 h-4" />
-                        <span>{totalDurationMinutes} min</span>
+                        <ClockIcon className="w-3 h-3" />
+                        <span>{course.totalDuration} min</span>
                     </div>
                     <div className="flex items-center gap-1">
-                        <StarIcon className="w-4 h-4 text-gray-400" />
-                        <span>{course.rating}</span>
+                        <StarIcon className="w-3 h-3" />
+                        <span>{course.rating.toFixed(1)}</span>
                     </div>
                 </div>
             </div>

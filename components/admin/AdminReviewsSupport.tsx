@@ -1,85 +1,87 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AdminPageLayout from './AdminPageLayout';
 import { StarIcon, CheckCircleIcon, TrashIcon } from '../Icons';
 import { useAppContext } from '../../context/AppContext';
 import { Review, ReviewStatus } from '../../types';
 
 const AdminReviewsSupport: React.FC = () => {
-    const { allReviews, updateReviewStatus, deleteReview, toggleReviewHomepageFeature } = useAppContext();
+    const { reviews, setReviews } = useAppContext();
+    const [filter, setFilter] = useState<ReviewStatus>('En attente');
 
-    const handleApprove = (reviewId: string) => {
-        updateReviewStatus(reviewId, 'Approuvé');
+    const filteredReviews = reviews.filter((review: Review) => {
+        if (filter === 'En attente') return review.status === 'En attente';
+        if (filter === 'Approuvé') return review.status === 'Approuvé';
+        if (filter === 'Rejeté') return review.status === 'Rejeté';
+        return true;
+    });
+
+    const handleStatusChange = (id: string, status: ReviewStatus) => {
+        setReviews(reviews.map((r: Review) => r.id === id ? { ...r, status } : r));
     };
 
-    const handleDelete = (reviewId: string) => {
-        if (window.confirm("Êtes-vous sûr de vouloir supprimer cet avis ?")) {
-            deleteReview(reviewId);
+    const deleteReview = (id: string) => {
+        if (window.confirm("Supprimer cet avis définitivement ?")) {
+            setReviews(reviews.filter((r: Review) => r.id !== id));
         }
     };
-    
-    const ReviewCard: React.FC<{ review: Review }> = ({ review }) => {
-        const statusBadge = review.status === 'Approuvé' 
-            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
-            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-            
-        return (
-            <li className="p-4 bg-black/5 dark:bg-white/5 rounded-lg">
-                <div className="flex justify-between items-start gap-4">
-                    <div className="flex items-start gap-3">
-                        <img src={review.avatar} alt={review.author} className="w-10 h-10 rounded-full object-cover" />
-                        <div className="flex-grow">
-                            <p className="font-semibold">{review.author}</p>
-                            <div className="flex items-center my-1">
-                                {[...Array(5)].map((_, i) => <StarIcon key={i} className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400' : 'text-gray-400'}`} />)}
-                            </div>
-                            <p className="text-sm text-gray-700 dark:text-gray-300 italic">"{review.comment}"</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                                Pour le cours : <span className="font-semibold">{review.courseTitle}</span>
-                            </p>
-                        </div>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                         <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full mb-2 inline-block ${statusBadge}`}>{review.status}</span>
-                        <div className="flex items-center gap-2 mt-1">
-                            {review.status === 'En attente' && (
-                                 <button onClick={() => handleApprove(review.id)} className="p-1.5 hover:bg-black/10 dark:hover:bg-white/10 rounded-full" title="Approuver">
-                                    <CheckCircleIcon className="w-5 h-5 text-green-500" />
-                                </button>
-                            )}
-                            <button onClick={() => handleDelete(review.id)} className="p-1.5 hover:bg-black/10 dark:hover:bg-white/10 rounded-full" title="Supprimer">
-                                <TrashIcon className="w-5 h-5 text-red-500" />
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                 {review.status === 'Approuvé' && (
-                    <div className="mt-3 pt-3 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                        <label htmlFor={`featured-${review.id}`} className="text-sm font-medium">Afficher sur l'accueil</label>
-                        <button
-                            id={`featured-${review.id}`}
-                            onClick={() => toggleReviewHomepageFeature(review.id)}
-                            className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${review.featuredOnHomepage ? 'bg-accent' : 'bg-gray-400'}`}
-                        >
-                            <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${review.featuredOnHomepage ? 'translate-x-6' : 'translate-x-1'}`} />
-                        </button>
-                    </div>
-                )}
-            </li>
-        );
-    }
 
     return (
-        <AdminPageLayout title="Gestion des Avis & Commentaires">
-            <div className="bg-white/30 dark:bg-black/20 rounded-2xl p-4 border border-white/20 dark:border-black/30">
-                {allReviews.length > 0 ? (
-                    <ul className="space-y-4">
-                        {allReviews.map((review) => (
-                            <ReviewCard key={review.id} review={review} />
-                        ))}
-                    </ul>
-                ) : (
-                    <p className="text-center text-gray-500 dark:text-gray-400 py-8">Aucun avis pour le moment.</p>
-                )}
+        <AdminPageLayout title="Gestion des Avis et du Support">
+            <div className="mb-4 border-b border-gray-200 dark:border-gray-700">
+                <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                    <button
+                        onClick={() => setFilter('En attente')}
+                        className={`${filter === 'En attente' ? 'border-accent text-accent' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                    >
+                        En attente
+                    </button>
+                    <button
+                        onClick={() => setFilter('Approuvé')}
+                        className={`${filter === 'Approuvé' ? 'border-accent text-accent' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                    >
+                        Approuvés
+                    </button>
+                    <button
+                        onClick={() => setFilter('Rejeté')}
+                        className={`${filter === 'Rejeté' ? 'border-accent text-accent' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                    >
+                        Rejetés
+                    </button>
+                </nav>
+            </div>
+
+            <div className="space-y-4">
+                {filteredReviews.map((review: Review) => (
+                    <div key={review.id} className="bg-white/30 dark:bg-black/20 p-4 rounded-lg shadow-sm border border-white/20 dark:border-black/30">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <div className="flex items-center gap-3">
+                                    <img src={review.avatar} alt={review.author} className="w-10 h-10 rounded-full" />
+                                    <div>
+                                        <p className="font-semibold">{review.author}</p>
+                                        <p className="text-sm text-gray-500">{review.courseTitle}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center mt-2">
+                                    {[...Array(5)].map((_, i) => (
+                                        <StarIcon key={i} className={`w-5 h-5 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`} />
+                                    ))}
+                                </div>
+                                <p className="mt-2 text-gray-700 dark:text-gray-300">{review.comment}</p>
+                                <p className="text-xs text-gray-400 mt-2">{new Date(review.date).toLocaleString()}</p>
+                            </div>
+                            <div className="flex flex-col items-end gap-2">
+                                {review.status === 'En attente' && (
+                                    <div className="flex gap-2">
+                                        <button onClick={() => handleStatusChange(review.id, 'Approuvé')} className="px-3 py-1 text-sm font-semibold text-white bg-green-500 rounded-md hover:bg-green-600">Approuver</button>
+                                        <button onClick={() => handleStatusChange(review.id, 'Rejeté')} className="px-3 py-1 text-sm font-semibold text-white bg-yellow-500 rounded-md hover:bg-yellow-600">Rejeter</button>
+                                    </div>
+                                )}
+                                <button onClick={() => deleteReview(review.id)} className="p-2 text-red-500 hover:text-red-700"><TrashIcon className="w-5 h-5" /></button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
             </div>
         </AdminPageLayout>
     );

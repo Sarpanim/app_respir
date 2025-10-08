@@ -8,7 +8,7 @@ import { DEFAULT_THEME_COLORS } from '../../constants';
 const PreviewPanel: React.FC<{ colors: ThemeColors; generalSettings: GeneralSettings }> = ({ colors, generalSettings }) => {
     const previewStyles: React.CSSProperties = {};
     for (const key of Object.keys(colors) as Array<keyof ThemeColors>) {
-        previewStyles[`--color-${key}` as any] = colors[key];
+        (previewStyles as any)[`--color-${key}`] = colors[key];
     }
 
     return (
@@ -16,7 +16,7 @@ const PreviewPanel: React.FC<{ colors: ThemeColors; generalSettings: GeneralSett
             <h3 className="font-bold text-lg">Aperçu en direct</h3>
             
             {/* Light Theme Preview */}
-            <div style={previewStyles} className="p-4 rounded-xl border border-black/20 dark:border-white/20" css={{ background: `var(--color-light-bg)` }}>
+            <div style={{...previewStyles, background: `var(--color-light-bg)`}} className="p-4 rounded-xl border border-black/20 dark:border-white/20">
                 <h4 className="text-sm font-bold mb-2 text-center text-[var(--color-card-text-light)]">Thème Clair</h4>
 
                 <div className="flex items-center justify-between mb-2 px-2 h-10 border-b border-black/10" style={{ background: `var(--color-header-bg-light)`}}>
@@ -69,7 +69,7 @@ const PreviewPanel: React.FC<{ colors: ThemeColors; generalSettings: GeneralSett
             </div>
 
             {/* Dark Theme Preview */}
-            <div style={previewStyles} className="p-4 rounded-xl border border-black/20 dark:border-white/20" css={{ background: `var(--color-dark-bg)` }}>
+            <div style={{...previewStyles, background: `var(--color-dark-bg)`}} className="p-4 rounded-xl border border-black/20 dark:border-white/20">
                 <h4 className="text-sm font-bold mb-2 text-center text-[var(--color-dark-text)]">Thème Sombre</h4>
                 
                  <div className="flex items-center justify-between mb-2 px-2 h-10 border-b border-white/10" style={{ background: `var(--color-header-bg-dark)`}}>
@@ -282,7 +282,7 @@ const AdminThemeColorManagement: React.FC = () => {
             {hasChanges && (
                 <button
                     onClick={handleSave}
-                    className="fixed bottom-28 right-8 z-50 bg-accent text-white rounded-full p-4 shadow-lg hover:scale-110 active:scale-100 transition-transform duration-200 ease-in-out transform-gpu animate-fade-in"
+                    className="fixed bottom-28 right-8 z-50 bg-accent text-white rounded-full p-4 shadow-lg hover:scale-110 active:scale-100 transition-transform duration-200 ease-in-out animate-fade-in"
                     aria-label="Sauvegarder les modifications"
                 >
                     <CheckIcon className="w-6 h-6" />

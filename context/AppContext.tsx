@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { supabase } from '../src/integrations/supabase/client';
-import { GeneralSettings, SubscriptionPlanId, NavItem, View, AdminView, AboutPageContent, TeamMember, SubscriptionPlan, PromoCode, Course, Lesson, UserProgress, Ambience, AmbienceCategory, User, NotificationSettings, FaqItem, PrivacyPolicyContent, SettingsMenuItem, ThemeColors, Review, ReviewStatus, Category, PageSettings, AmbiencePageSettings } from '../types';
-import { DEFAULT_MOBILE_NAV_ITEMS, DEFAULT_HEADER_NAV_ITEMS, DEFAULT_SUBSCRIPTION_PLANS, DEFAULT_PROMO_CODES, COURSES, AMBIENCE_SOUNDS, AMBIENCE_CATEGORIES, DEFAULT_FAQ_ITEMS, DEFAULT_PRIVACY_POLICY, DEFAULT_SETTINGS_MENU_ITEMS, DEFAULT_HOMEPAGE_SECTIONS, DEFAULT_MEGA_MENU, DEFAULT_THEME_COLORS, DEFAULT_DISCOVER_PAGE_SETTINGS, DEFAULT_FOOTER_SETTINGS, DEFAULT_HOMEPAGE_QUOTE, DEFAULT_HOMEPAGE_IMAGE_TEXT, DEFAULT_HOMEPAGE_SLIDER, DEFAULT_HOMEPAGE_REVIEWS_SETTINGS, DEFAULT_HOMEPAGE_MENTORS_SETTINGS, DEFAULT_ALL_REVIEWS, DEFAULT_HOMEPAGE_SLIDER2, DEFAULT_HOMEPAGE_SLIDER3, CATEGORIES, DEFAULT_AMBIENCE_PAGE_SETTINGS } from '../constants';
+import { GeneralSettings, SubscriptionPlanId, NavItem, View, AdminView, AboutPageContent, TeamMember, SubscriptionPlan, PromoCode, Course, Lesson, UserProgress, Ambience, AmbienceCategory, User, NotificationSettings, FaqItem, PrivacyPolicyContent, SettingsMenuItem, ThemeColors, Review, ReviewStatus, Category, PageSettings, AmbiencePageSettings, Invoice, EmailCampaign } from '../types';
+import { DEFAULT_MOBILE_NAV_ITEMS, DEFAULT_HEADER_NAV_ITEMS, DEFAULT_SUBSCRIPTION_PLANS, DEFAULT_PROMO_CODES, COURSES, AMBIENCE_SOUNDS, AMBIENCE_CATEGORIES, DEFAULT_FAQ_ITEMS, DEFAULT_PRIVACY_POLICY, DEFAULT_SETTINGS_MENU_ITEMS, DEFAULT_HOMEPAGE_SECTIONS, DEFAULT_MEGA_MENU, DEFAULT_THEME_COLORS, DEFAULT_DISCOVER_PAGE_SETTINGS, DEFAULT_FOOTER_SETTINGS, DEFAULT_HOMEPAGE_QUOTE, DEFAULT_HOMEPAGE_IMAGE_TEXT, DEFAULT_HOMEPAGE_SLIDER, DEFAULT_HOMEPAGE_REVIEWS_SETTINGS, DEFAULT_HOMEPAGE_MENTORS_SETTINGS, DEFAULT_ALL_REVIEWS, DEFAULT_HOMEPAGE_SLIDER2, DEFAULT_HOMEPAGE_SLIDER3, CATEGORIES, DEFAULT_AMBIENCE_PAGE_SETTINGS, DEFAULT_INVOICES, DEFAULT_USERS, DEFAULT_EMAIL_CAMPAIGNS } from '../constants';
 import { v4 as uuidv4 } from 'uuid';
 
 const slugify = (text: string) => {
@@ -22,44 +22,28 @@ interface AppContextType {
   logout: () => void;
   
   currentView: View;
-  currentCourseId: string | null;
-  currentAmbienceId: number | null;
-  currentCategoryId: number | null;
+  currentParams: any;
   
-  handleLinkNavigation: (url: string) => void;
-  navigateToGrid: () => void;
-  navigateToPlayer: (courseId: string) => void;
-  navigateToProfile: () => void;
-  navigateToDiscover: () => void;
-  navigateToAmbience: () => void;
-  navigateToAmbiencePlayer: (ambienceId: number) => void;
-  navigateToCategoryDetail: (categoryId: number) => void;
-  navigateToSubscription: () => void;
-  navigateToSettings: () => void;
-  navigateToAbout: () => void;
-  navigateToPlayerView: () => void;
-  navigateToAmbiencePlayerView: () => void;
-  navigateTo: (view: View) => void;
-  navigateToEditProfile: () => void;
-  navigateToNotifications: () => void;
-  navigateToHelpFaq: () => void;
-  navigateToContactSupport: () => void;
-  navigateToPrivacyPolicy: () => void;
-  navigateToInviteFriend: () => void;
+  navigateTo: (view: View, params?: any) => void;
 
   user: User;
   updateUser: (updatedUser: Partial<User>) => void;
+  users: User[];
+  setUsers: React.Dispatch<React.SetStateAction<User[]>>;
 
   isSettingsOpen: boolean;
   toggleSettings: () => void;
   
+  showAuth: boolean;
+  setShowAuth: React.Dispatch<React.SetStateAction<boolean>>;
+
   userProgress: UserProgress;
   markLessonAsComplete: (courseId: string, lessonId: string) => void;
   
-  favorites: string[];
-  toggleFavorite: (courseId: string) => void;
+  isFavoriteCourse: (courseId: string) => boolean;
+  toggleFavoriteCourse: (courseId: string) => void;
   
-  favoriteAmbienceIds: number[];
+  isFavoriteAmbience: (ambienceId: number) => boolean;
   toggleFavoriteAmbience: (ambienceId: number) => void;
 
   subscriptionPlan: SubscriptionPlanId;
@@ -75,6 +59,7 @@ interface AppContextType {
   promoCodes: PromoCode[];
   updatePromoCodes: (codes: PromoCode[]) => void;
 
+  courses: Course[];
   ambiences: Ambience[];
   updateAmbiences: (ambiences: Ambience[]) => void;
 
@@ -83,8 +68,6 @@ interface AppContextType {
 
   isAdmin: boolean;
   currentAdminView: AdminView;
-  navigateToAdmin: () => void;
-  navigateToAdminDashboard: () => void;
   navigateToAdminPage: (page: AdminView) => void;
 
   generalSettings: GeneralSettings;
@@ -111,11 +94,18 @@ interface AppContextType {
   privacyPolicyContent: PrivacyPolicyContent;
   updatePrivacyPolicyContent: (content: PrivacyPolicyContent) => void;
 
-  allReviews: Review[];
+  reviews: Review[];
+  setReviews: React.Dispatch<React.SetStateAction<Review[]>>;
   addReview: (reviewData: Omit<Review, 'id' | 'authorId' | 'author' | 'avatar' | 'date' | 'status'>) => void;
   updateReviewStatus: (reviewId: string, status: ReviewStatus) => void;
   deleteReview: (reviewId: string) => void;
   toggleReviewHomepageFeature: (reviewId: string) => void;
+
+  invoices: Invoice[];
+  setInvoices: React.Dispatch<React.SetStateAction<Invoice[]>>;
+
+  emailCampaigns: EmailCampaign[];
+  setEmailCampaigns: React.Dispatch<React.SetStateAction<EmailCampaign[]>>;
 
   pageSettings: PageSettings;
   setPageSettings: React.Dispatch<React.SetStateAction<PageSettings>>;
@@ -177,6 +167,9 @@ const defaultGeneralSettings: GeneralSettings = {
     defaultSubscriptionCycle: 'monthly',
     subscriptionTitleFont: 'Elsie',
     subscriptionTitleColor: '#00A388',
+    headerNavItems: DEFAULT_HEADER_NAV_ITEMS,
+    mobileNavItems: DEFAULT_MOBILE_NAV_ITEMS,
+    accountMenuItems: DEFAULT_SETTINGS_MENU_ITEMS,
 };
 
 
@@ -231,10 +224,9 @@ const defaultNotificationSettings: NotificationSettings = {
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentView, setCurrentView] = useState<View>('grid');
-  const [currentCourseId, setCurrentCourseId] = useState<string | null>(null);
-  const [currentAmbienceId, setCurrentAmbienceId] = useState<number | null>(null);
-  const [currentCategoryId, setCurrentCategoryId] = useState<number | null>(null);
+  const [currentParams, setCurrentParams] = useState<any>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
   
   const [userProgress, setUserProgress] = useState<UserProgress>(() => {
     const initialProgress: UserProgress = {};
@@ -252,17 +244,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return initialProgress;
   });
 
-  const [favorites, setFavorites] = useState<string[]>(['2']);
+  const [favoriteCourses, setFavoriteCourses] = useState<string[]>(['2']);
   const [favoriteAmbienceIds, setFavoriteAmbienceIds] = useState<number[]>([1]);
   const [subscriptionPlan, setSubscriptionPlan] = useState<SubscriptionPlanId>('free');
   const [user, setUser] = useState<User>({ ...defaultUser, plan: subscriptionPlan });
+  const [users, setUsers] = useState<User[]>(DEFAULT_USERS);
   const [justSubscribedPlanId, setJustSubscribedPlanId] = useState<SubscriptionPlanId | null>(null);
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>(DEFAULT_SUBSCRIPTION_PLANS);
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>(DEFAULT_PROMO_CODES);
+  const [courses, setCourses] = useState<Course[]>(COURSES);
   const [ambiences, setAmbiences] = useState<Ambience[]>(AMBIENCE_SOUNDS);
   const [ambienceCategories, setAmbienceCategories] = useState<AmbienceCategory[]>(AMBIENCE_CATEGORIES);
   
-  // Admin status is now determined by email
   const isAdmin = user.email === ADMIN_EMAIL;
   const [currentAdminView, setCurrentAdminView] = useState<AdminView>('dashboard');
 
@@ -274,7 +267,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [faqItems, setFaqItems] = useState<FaqItem[]>(DEFAULT_FAQ_ITEMS);
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(defaultNotificationSettings);
   const [privacyPolicyContent, setPrivacyPolicyContent] = useState<PrivacyPolicyContent>(DEFAULT_PRIVACY_POLICY);
-  const [allReviews, setAllReviews] = useState<Review[]>(DEFAULT_ALL_REVIEWS);
+  const [reviews, setReviews] = useState<Review[]>(DEFAULT_ALL_REVIEWS);
+  const [invoices, setInvoices] = useState<Invoice[]>(DEFAULT_INVOICES);
+  const [emailCampaigns, setEmailCampaigns] = useState<EmailCampaign[]>(DEFAULT_EMAIL_CAMPAIGNS);
 
   const [pageSettings, setPageSettings] = useState<PageSettings>({
     'ambience-player': { showHeader: false },
@@ -308,50 +303,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
   
   const logout = async () => {
-    // Déconnexion Supabase
     await supabase.auth.signOut();
-    
     setIsAuthenticated(false);
-    setCurrentView('grid');
+    navigateTo('grid');
     closePlayer();
-    // Reset user to default non-admin user
     setUser({ ...defaultUser, plan: subscriptionPlan });
   };
 
-  const navigateTo = (view: View) => {
+  const navigateTo = (view: View, params: any = null) => {
     setCurrentView(view);
+    setCurrentParams(params);
     setIsSettingsOpen(false);
   };
-
-  const navigateToGrid = () => navigateTo('grid');
-  const navigateToPlayer = (courseId: string) => {
-    setCurrentCourseId(courseId);
-    navigateTo('player');
-  };
-  const navigateToProfile = () => navigateTo('profile');
-  const navigateToDiscover = () => navigateTo('discover');
-  const navigateToAmbience = () => navigateTo('ambience');
-  const navigateToAmbiencePlayer = (ambienceId: number) => {
-      const ambience = ambiences.find(a => a.id === ambienceId);
-      if (ambience) {
-          playAmbience(ambience);
-      }
-  };
-  const navigateToCategoryDetail = (categoryId: number) => {
-      setCurrentCategoryId(categoryId);
-      navigateTo('category-detail');
-  };
-  const navigateToSubscription = () => navigateTo('subscription');
-  const navigateToSettings = () => navigateTo('settings');
-  const navigateToAbout = () => navigateTo('about');
-  const navigateToPlayerView = () => navigateTo('player-view');
-  const navigateToAmbiencePlayerView = () => navigateTo('ambience-player');
-  const navigateToEditProfile = () => navigateTo('edit-profile');
-  const navigateToNotifications = () => navigateTo('notifications');
-  const navigateToHelpFaq = () => navigateTo('help-faq');
-  const navigateToContactSupport = () => navigateTo('contact-support');
-  const navigateToPrivacyPolicy = () => navigateTo('privacy-policy');
-  const navigateToInviteFriend = () => navigateTo('invite-friend');
 
   const handleLinkNavigation = (url: string) => {
     if (url === '#') return;
@@ -360,13 +323,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const slug = url.replace('/categorie/', '');
         const category = CATEGORIES.find(c => slugify(c.name) === slug);
         if (category) {
-            navigateToCategoryDetail(category.id);
+            navigateTo('category-detail', { categoryId: category.id });
         }
     } else if (url.startsWith('/cours/')) {
         const slug = url.replace('/cours/', '');
         const course = COURSES.find(c => slugify(c.title) === slug);
         if (course) {
-            navigateToPlayer(course.id);
+            navigateTo('player', { courseId: course.id });
         }
     } else if (url.startsWith('/')) {
         const view = url.substring(1) as View;
@@ -391,12 +354,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
   };
 
-  const toggleFavorite = (courseId: string) => {
-    setFavorites(prev => 
+  const isFavoriteCourse = (courseId: string) => favoriteCourses.includes(courseId);
+  const toggleFavoriteCourse = (courseId: string) => {
+    setFavoriteCourses(prev => 
       prev.includes(courseId) ? prev.filter(id => id !== courseId) : [...prev, courseId]
     );
   };
   
+  const isFavoriteAmbience = (ambienceId: number) => favoriteAmbienceIds.includes(ambienceId);
   const toggleFavoriteAmbience = (ambienceId: number) => {
       setFavoriteAmbienceIds(prev => 
         prev.includes(ambienceId) ? prev.filter(id => id !== ambienceId) : [...prev, ambienceId]
@@ -429,17 +394,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const isSubscribed = subscriptionPlan !== 'free';
-
-  const navigateToAdmin = () => {
-      if (!isAdmin) return;
-      setCurrentAdminView('dashboard');
-      navigateTo('admin');
-  };
-
-  const navigateToAdminDashboard = () => {
-      if (!isAdmin) return;
-      setCurrentAdminView('dashboard');
-  };
 
   const navigateToAdminPage = (page: AdminView) => {
       if (!isAdmin) return;
@@ -502,19 +456,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         date: new Date().toISOString(),
         status: 'En attente',
     };
-    setAllReviews(prev => [newReview, ...prev]);
+    setReviews(prev => [newReview, ...prev]);
   };
 
   const updateReviewStatus = (reviewId: string, status: ReviewStatus) => {
-      setAllReviews(prev => prev.map(r => r.id === reviewId ? { ...r, status } : r));
+      setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, status } : r));
   };
 
   const deleteReview = (reviewId: string) => {
-      setAllReviews(prev => prev.filter(r => r.id !== reviewId));
+      setReviews(prev => prev.filter(r => r.id !== reviewId));
   };
 
   const toggleReviewHomepageFeature = (reviewId: string) => {
-      setAllReviews(prev => prev.map(r => r.id === reviewId ? { ...r, featuredOnHomepage: !r.featuredOnHomepage } : r));
+      setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, featuredOnHomepage: !r.featuredOnHomepage } : r));
   };
 
   // --- PLAYER LOGIC ---
@@ -639,35 +593,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const value = {
     isAuthenticated, login, logout,
-    currentView, currentCourseId, currentAmbienceId, currentCategoryId,
-    handleLinkNavigation,
-    navigateToGrid, navigateToPlayer, navigateToProfile, navigateToDiscover,
-    navigateToAmbience, navigateToAmbiencePlayer, navigateToCategoryDetail,
-    navigateToSubscription,
-    navigateToSettings,
-    navigateToAbout,
-    navigateToPlayerView,
-    navigateToAmbiencePlayerView,
+    currentView, currentParams,
     navigateTo,
-    navigateToEditProfile,
-    navigateToNotifications,
-    navigateToHelpFaq,
-    navigateToContactSupport,
-    navigateToPrivacyPolicy,
-    navigateToInviteFriend,
-    user,
-    updateUser,
+    user, updateUser, users, setUsers,
     isSettingsOpen, toggleSettings,
+    showAuth, setShowAuth,
     userProgress, markLessonAsComplete,
-    favorites, toggleFavorite,
-    favoriteAmbienceIds, toggleFavoriteAmbience,
+    isFavoriteCourse, toggleFavoriteCourse,
+    isFavoriteAmbience, toggleFavoriteAmbience,
     subscriptionPlan, justSubscribedPlanId, clearJustSubscribed, isSubscribed, changeSubscription,
     canAccessCourse,
     subscriptionPlans, updateSubscriptionPlans,
     promoCodes, updatePromoCodes,
+    courses,
     ambiences, updateAmbiences,
     ambienceCategories, updateAmbienceCategories,
-    isAdmin, currentAdminView, navigateToAdmin, navigateToAdminDashboard, navigateToAdminPage,
+    isAdmin, currentAdminView, navigateToAdminPage,
     generalSettings, updateGeneralSettings,
     mobileNavItems, updateMobileNavItems,
     headerNavItems, updateHeaderNavItems,
@@ -676,7 +617,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     faqItems, updateFaqItems,
     notificationSettings, updateNotificationSettings,
     privacyPolicyContent, updatePrivacyPolicyContent,
-    allReviews, addReview, updateReviewStatus, deleteReview, toggleReviewHomepageFeature,
+    reviews, setReviews, addReview, updateReviewStatus, deleteReview, toggleReviewHomepageFeature,
+    invoices, setInvoices,
+    emailCampaigns, setEmailCampaigns,
     pageSettings, setPageSettings,
     currentlyPlayingLesson, currentPlayingCourse, currentlyPlayingAmbience, isPlaying, audioCurrentTime, audioDuration,
     playLesson, playAmbience, togglePlayPause, seekAudio, playNext, playPrev, closePlayer,
