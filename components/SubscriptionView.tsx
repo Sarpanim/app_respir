@@ -1,279 +1,141 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { ChevronLeftIcon, CheckIcon, ChevronRightIcon, GiftIcon } from './Icons';
-import { SubscriptionPlan } from '../types';
+import { CheckCircleIcon, GiftIcon, ChevronLeftIcon } from './Icons';
 import PaymentModal from './PaymentModal';
-import DynamicIcon from './DynamicIcon';
+import { SubscriptionPlan, PromoCode } from '../types';
 
 const SubscriptionView: React.FC = () => {
-    const { subscriptionPlan, changeSubscription, navigateToSettings, subscriptionPlans, navigateToPrivacyPolicy, generalSettings, promoCodes } = useAppContext();
-    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-    const [selectedPlanForPayment, setSelectedPlanForPayment] = useState<{ plan: SubscriptionPlan, isAnnual: boolean } | null>(null);
+    const { subscriptionPlans, promoCodes, user, changeSubscription, navigateTo } = useAppContext();
+    const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
+    const [isAnnual, setIsAnnual] = useState(false);
+    const [promoCodeInput, setPromoCodeInput] = useState('');
+    const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
 
-    const handleOpenPaymentModal = (plan: SubscriptionPlan, isAnnual: boolean) => {
-        if (plan.id === 'free') return;
-        if (plan.id === subscriptionPlan) return; 
-
-        setSelectedPlanForPayment({ plan, isAnnual });
-        setIsPaymentModalOpen(true);
-    };
-
-    const handleClosePaymentModal = () => {
-        setIsPaymentModalOpen(false);
-        setSelectedPlanForPayment(null);
-    };
-    
-    const handleSubscriptionSuccess = (planId: SubscriptionPlan['id']) => {
-        changeSubscription(planId);
-        handleClosePaymentModal();
-    }
-    
-    const SubscriptionCard: React.FC<{ plan: SubscriptionPlan }> = ({ plan }) => {
-        const [isAnnual, setIsAnnual] = useState(generalSettings.defaultSubscriptionCycle === 'annual');
-        const isCurrentPlan = plan.id === subscriptionPlan;
-
-        const applicablePromo = useMemo(() => {
-            if (!promoCodes) return null;
-            const now = new Date();
-            // Find the first valid promo code that applies to this plan
-            return promoCodes.find(code => {
-                const isActive = code.status === 'active';
-                const startDate = new Date(code.startDate);
-                const endDate = new Date(code.endDate);
-                endDate.setHours(23, 59, 59, 999);
-
-                const isDateValid = startDate <= now && endDate >= now;
-                const isUsageValid = code.usageLimit === null || code.usageCount < code.usageLimit;
-                const appliesToPlan = plan.id !== 'free' && (code.applicablePlanIds === 'all' || (Array.isArray(code.applicablePlanIds) && code.applicablePlanIds.includes(plan.id)));
-                
-                return isActive && isDateValid && isUsageValid && appliesToPlan;
-            });
-        }, [promoCodes, plan.id]);
-
-        const parsePrice = (priceString: string): number => {
-            if (!priceString) return 0;
-            const match = priceString.match(/(\d+[,.]\d+)/);
-            return match ? parseFloat(match[0].replace(',', '.')) : 0;
-        };
-
-        const calculateDiscountedPrice = (price: number, promo: typeof applicablePromo): number => {
-            if (!promo) return price;
-            if (promo.type === 'percentage') {
-                return price * (1 - promo.value / 100);
-            }
-            if (promo.type === 'fixed') {
-                return Math.max(0, price - promo.value);
-            }
-            return price;
-        };
-
-        const formatPrice = (price: number): string => {
-            return price.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '€';
-        };
-
-        const originalMonthlyPriceValue = parsePrice(plan.price);
-        const originalAnnualPriceValue = parsePrice(plan.priceAnnual);
-    
-        const discountedMonthlyPriceValue = calculateDiscountedPrice(originalMonthlyPriceValue, applicablePromo);
-        const discountedAnnualPriceValue = calculateDiscountedPrice(originalAnnualPriceValue, applicablePromo);
-
-        const originalPriceString = isAnnual ? plan.priceAnnual : plan.price;
-        const originalPriceValue = isAnnual ? originalAnnualPriceValue : originalMonthlyPriceValue;
-        const discountedPriceValue = isAnnual ? discountedAnnualPriceValue : discountedMonthlyPriceValue;
-
-        const hasDiscount = applicablePromo && discountedPriceValue < originalPriceValue;
-
-        const periodMatch = originalPriceString.match(/\s*(\/.*)/);
-        const period = periodMatch ? periodMatch[1].trim() : '';
-        
-        const valueMatch = originalPriceString.match(/[\d,.]+[€$]/);
-        const originalDisplayPrice = valueMatch ? valueMatch[0] : originalPriceString;
-        const discountedDisplayPrice = hasDiscount ? formatPrice(discountedPriceValue) : null;
-        
-        const ctaText = isCurrentPlan 
-            ? "Votre formule" 
-            : `S'abonner pour ${discountedDisplayPrice || originalDisplayPrice} ${period}`;
-
-        let savings = 0;
-        if (hasDiscount) {
-            if (isAnnual) {
-                savings = originalAnnualPriceValue - discountedAnnualPriceValue;
-            } else {
-                const monthlySaving = originalMonthlyPriceValue - discountedMonthlyPriceValue;
-                savings = monthlySaving * 12;
-            }
+    const handleSelectPlan = (plan: SubscriptionPlan) => {
+        if (plan.id !== user.plan) {
+            setSelectedPlan(plan);
         }
+    };
 
-        const savingsTextParts = (plan.annualSavingsText?.fr || '').split('%s');
+    const handleApplyPromo = () => {
+        const now = new Date();
+        const validPromo = promoCodes.find(code => {
+            if (code.code.toLowerCase() !== promoCodeInput.toLowerCase()) return false;
+            if (code.status !== 'active') return false;
+            
+            const startDate = code.startDate ? new Date(code.startDate) : null;
+            const endDate = code.endDate ? new Date(code.endDate) : null;
+            if (endDate) endDate.setHours(23, 59, 59, 999);
 
-        const getFontClass = (font?: string) => {
-            switch (font) {
-                case 'Elsie':
-                    return 'font-elsie';
-                case 'Dancing Script':
-                    return 'font-dancing-script';
-                default:
-                    return 'font-montserrat';
+            if (startDate && now < startDate) return false;
+            if (endDate && now > endDate) return false;
+
+            const isUsageValid = code.usageLimit === null || (code.usageCount || 0) < code.usageLimit;
+            if (!isUsageValid) return false;
+
+            return true;
+        });
+
+        if (validPromo) {
+            setAppliedPromo(validPromo);
+        } else {
+            alert("Code promo invalide ou expiré.");
+            setAppliedPromo(null);
+        }
+    };
+
+    const getPrice = (plan: SubscriptionPlan) => {
+        let priceStr = isAnnual ? plan.priceAnnual : plan.price;
+        let priceNum = parseFloat(priceStr.replace(/[^0-9,.]/g, '').replace(',', '.'));
+
+        if (appliedPromo && (appliedPromo.applicablePlanIds === 'all' || appliedPromo.applicablePlanIds.includes(plan.id))) {
+            if (appliedPromo.type === 'percentage') {
+                priceNum *= (1 - appliedPromo.value / 100);
+            } else {
+                priceNum = Math.max(0, priceNum - appliedPromo.value);
             }
-        };
-
-        return (
-            <div className={`relative rounded-xl flex flex-col h-full w-full max-w-sm transition-all duration-300 ${plan.isPopular ? 'border-2 border-secondary shadow-2xl shadow-secondary/20' : 'border border-gray-700'}`}>
-                {plan.isPopular && (
-                    <div className="absolute -top-3 right-4 z-30 bg-secondary text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                        Populaire
-                    </div>
-                )}
-                {/* Overlapping Icon */}
-                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-20">
-                    <div 
-                        className="w-12 h-12 bg-gray-900 rounded-full flex items-center justify-center border border-gray-700"
-                        style={{ color: plan.iconColor || 'var(--color-accent)' }}
-                    >
-                        <DynamicIcon icon={plan.icon} className="w-6 h-6" />
-                    </div>
-                </div>
-                
-                {/* Top part */}
-                <div className="relative bg-gray-900 pt-10 px-6 pb-8 rounded-t-xl flex flex-col flex-grow">
-                    <h2 
-                        className={`${plan.titleSize || 'text-xl'} font-bold text-center mb-2 flex-shrink-0 ${getFontClass(plan.titleFont)}`}
-                        style={{ color: plan.titleColor || '#FFFFFF' }}
-                    >
-                        {plan.name.fr}
-                    </h2>
-                    
-                    <div className="flex-grow flex flex-col justify-center">
-                        <div className="text-gray-400 text-sm text-center space-y-1 my-4" style={{ transform: 'translateY(5px)'}}>
-                            {plan.description.fr.split('\n').map((line, i) => <p key={i}>{line}</p>)}
-                        </div>
-                    </div>
-                     <ul className="space-y-2 text-sm text-gray-300 text-left self-center max-w-xs mb-8">
-                        {plan.features.fr.map((feature, index) => (
-                            <li key={index} className="flex items-start">
-                                <CheckIcon className="w-5 h-5 text-emerald-500 flex-shrink-0 mr-[3px] mt-0.5" />
-                                <span>{feature}</span>
-                            </li>
-                        ))}
-                    </ul>
-
-                    <div className="absolute bottom-0 left-1 right-1 transform translate-y-1/2 z-10 px-4">
-                        <div className="relative flex w-full bg-emerald-500 rounded-full p-1">
-                            <div
-                                className={`absolute top-1 bottom-1 bg-white rounded-full shadow-sm transition-all duration-300 ease-in-out ${
-                                    isAnnual ? 'left-1/2 right-1 ml-0.5' : 'left-1 right-1/2 mr-0.5'
-                                }`}
-                            />
-                            <button
-                                onClick={() => setIsAnnual(false)}
-                                className={`relative z-10 flex-1 py-2 rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                    !isAnnual ? 'text-black' : 'text-white'
-                                }`}
-                            >
-                                Mensuel
-                            </button>
-                            <button
-                                onClick={() => setIsAnnual(true)}
-                                className={`relative z-10 flex-1 py-2 rounded-full text-sm font-semibold transition-colors duration-300 ${
-                                    isAnnual ? 'text-black' : 'text-white'
-                                }`}
-                            >
-                                Annuel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Bottom part */}
-                <div className="bg-gray-800 px-6 pb-6 pt-12 rounded-b-xl flex-grow flex flex-col">
-                    <div>
-                        <div className="text-center mb-2 flex min-h-[3.5rem] flex-col items-center justify-center">
-                             {hasDiscount && applicablePromo && (
-                                <div className="mb-2">
-                                    <span className="font-semibold" style={{ color: applicablePromo.textColor || '#A0AEC0' }}>{applicablePromo.code}</span>{' '}
-                                    <span className="text-accent font-bold">
-                                        {applicablePromo.type === 'percentage' ? `-${applicablePromo.value}%` : `-${formatPrice(applicablePromo.value)}`}
-                                    </span>
-                                </div>
-                            )}
-                            {discountedDisplayPrice ? (
-                                <div className="flex items-baseline gap-2">
-                                    <s className="text-2xl font-bold text-gray-500">{originalDisplayPrice}</s>
-                                    <span className="text-3xl font-bold text-white">{discountedDisplayPrice}</span>
-                                    <span className="text-base text-gray-400">{period}</span>
-                                </div>
-                            ) : (
-                                <div className="flex items-baseline">
-                                    <span className="text-3xl font-bold text-white">{originalDisplayPrice}</span>
-                                    <span className="ml-1 text-base text-gray-400">{period}</span>
-                                </div>
-                            )}
-                        </div>
-                        
-                        <div className="h-4 mb-6 text-xs text-center">
-                           {hasDiscount && plan.showAnnualSavings && savingsTextParts.length === 2 && (
-                                <p style={{ color: plan.annualSavingsTextColor || '#00A388' }}>
-                                    {savingsTextParts[0]}
-                                    <strong className="text-white">{formatPrice(savings)}</strong>
-                                    {savingsTextParts[1]}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-                    
-                    <div className="mt-auto">
-                        <button 
-                            onClick={() => handleOpenPaymentModal(plan, isAnnual)}
-                            disabled={isCurrentPlan}
-                            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-full transition-all shadow-lg hover:shadow-xl disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed"
-                        >
-                            {ctaText}
-                        </button>
-
-                        <p className="text-gray-500 text-xs text-center mt-4">
-                            En continuant, vous acceptez nos{' '}
-                            <button onClick={() => navigateToPrivacyPolicy()} className="text-accent hover:underline">Conditions Générales de Vente</button>.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        );
+            return `${priceNum.toFixed(2).replace('.', ',')}€`;
+        }
+        return priceStr.split(' ')[0];
     };
 
     return (
-        <>
-            <div className="animate-fade-in max-w-5xl mx-auto">
-                <header className="relative flex items-center justify-center my-8">
-                    <button onClick={navigateToSettings} className="absolute left-0 p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10">
-                        <ChevronLeftIcon className="w-6 h-6" />
-                    </button>
-                    <h1 
-                      className="text-4xl sm:text-5xl font-bold"
-                      style={{
-                        fontFamily: generalSettings.subscriptionTitleFont === 'Dancing Script' ? '"Dancing Script", cursive' : '"Elsie", serif',
-                        color: generalSettings.subscriptionTitleColor
-                      }}
-                    >
-                        Abonnement
-                    </h1>
-                </header>
+        <div className="max-w-4xl mx-auto p-4 animate-fade-in">
+            <header className="relative flex items-center justify-center mb-8">
+                <button onClick={() => navigateTo('profile')} className="absolute left-0 p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10">
+                    <ChevronLeftIcon className="w-6 h-6" />
+                </button>
+                <h1 className="text-2xl font-elsie font-bold">Nos Abonnements</h1>
+            </header>
 
-                <div className="p-4 pt-8">
-                    <div className="flex justify-center flex-wrap gap-x-6 gap-y-12">
-                        {subscriptionPlans.filter(p => p.isActive && p.id !== 'free').map(plan => (
-                            <SubscriptionCard key={plan.id} plan={plan} />
-                        ))}
-                    </div>
+            <div className="flex justify-center mb-8">
+                <div className="bg-gray-200 dark:bg-gray-700 rounded-full p-1 flex items-center">
+                    <button onClick={() => setIsAnnual(false)} className={`px-6 py-2 rounded-full text-sm font-semibold ${!isAnnual ? 'bg-white dark:bg-gray-900 shadow' : ''}`}>
+                        Mensuel
+                    </button>
+                    <button onClick={() => setIsAnnual(true)} className={`px-6 py-2 rounded-full text-sm font-semibold ${isAnnual ? 'bg-white dark:bg-gray-900 shadow' : ''}`}>
+                        Annuel <span className="bg-accent/20 text-accent text-xs px-2 py-0.5 rounded-full ml-1">Économisez !</span>
+                    </button>
                 </div>
             </div>
-            <PaymentModal 
-                isOpen={isPaymentModalOpen}
-                onClose={handleClosePaymentModal}
-                plan={selectedPlanForPayment?.plan ?? null}
-                onSuccess={handleSubscriptionSuccess}
-                isAnnual={selectedPlanForPayment?.isAnnual ?? true}
-            />
-        </>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {subscriptionPlans.filter(p => p.isActive && p.id !== 'free').map(plan => (
+                    <div key={plan.id} className={`p-6 rounded-2xl border-2 ${plan.isPopular ? 'border-accent' : 'border-gray-300 dark:border-gray-600'} bg-white/50 dark:bg-black/20 relative`}>
+                        {plan.isPopular && <div className="absolute top-0 -translate-y-1/2 right-4 bg-accent text-white text-xs font-bold px-3 py-1 rounded-full">Populaire</div>}
+                        <h3 className="text-xl font-bold">{plan.name.fr}</h3>
+                        <p className="text-gray-500 text-sm mt-1">{plan.description.fr}</p>
+                        <div className="my-6">
+                            <span className="text-4xl font-bold">{getPrice(plan)}</span>
+                            <span className="text-gray-500">/{isAnnual ? 'an' : 'mois'}</span>
+                        </div>
+                        <ul className="space-y-3 text-sm">
+                            {plan.features.fr.map((feature, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                    <CheckCircleIcon className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
+                                    <span>{feature}</span>
+                                </li>
+                            ))}
+                        </ul>
+                        <button 
+                            onClick={() => handleSelectPlan(plan)}
+                            disabled={user.plan === plan.id}
+                            className={`w-full mt-8 py-3 rounded-lg font-semibold ${user.plan === plan.id ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-accent text-white hover:bg-accent/90'}`}
+                        >
+                            {user.plan === plan.id ? 'Abonnement Actuel' : 'Choisir ce plan'}
+                        </button>
+                    </div>
+                ))}
+            </div>
+
+            <div className="mt-8 max-w-md mx-auto">
+                <div className="flex items-center gap-2">
+                    <GiftIcon className="w-5 h-5 text-accent" />
+                    <input 
+                        type="text"
+                        placeholder="Code promo"
+                        value={promoCodeInput}
+                        onChange={(e) => setPromoCodeInput(e.target.value)}
+                        className="flex-grow input-style"
+                    />
+                    <button onClick={handleApplyPromo} className="btn-secondary">Appliquer</button>
+                </div>
+                {appliedPromo && <p className="text-green-600 text-sm mt-2 text-center">Code "{appliedPromo.code}" appliqué !</p>}
+            </div>
+
+            {selectedPlan && (
+                <PaymentModal 
+                    plan={selectedPlan}
+                    isAnnual={isAnnual}
+                    promo={appliedPromo}
+                    onClose={() => setSelectedPlan(null)}
+                    onConfirm={() => {
+                        changeSubscription(selectedPlan.id);
+                        setSelectedPlan(null);
+                    }}
+                />
+            )}
+        </div>
     );
 };
 

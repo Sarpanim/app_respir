@@ -201,7 +201,7 @@ export interface PromoCode {
     usageLimit: number | null;
     startDate: string | null;
     endDate: string | null;
-    applicablePlanIds: SubscriptionPlanId[];
+    applicablePlanIds: SubscriptionPlanId[] | 'all';
     textColor?: string;
 }
 

@@ -7,7 +7,7 @@ import {
     UserIcon, DocumentTextIcon, MusicalNoteIcon, HamburgerIcon, InformationCircleIcon,
     ClipboardDocumentListIcon, PaintBrushIcon, HomeIcon, PhotoIcon,
     ChatBubbleOvalLeftEllipsisIcon, QuestionMarkCircleIcon, ShieldCheckIcon, ListBulletIcon,
-    ImageIcon, DevicePhoneMobileIcon, MapIcon
+    ImageIcon, DevicePhoneMobileIcon, MapIcon, ChevronRightIcon
 } from './Icons';
 import AdminSubscriptionTracking from './admin/AdminSubscriptionTracking';
 import AdminInvoiceManagement from './admin/AdminInvoiceManagement';

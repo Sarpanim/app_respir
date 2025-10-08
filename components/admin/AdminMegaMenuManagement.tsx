@@ -49,7 +49,7 @@ const AdminMegaMenuManagement: React.FC = () => {
     };
 
     const addLink = (colIndex: number) => {
-        const newLink: MegaMenuLink = { id: `link-${Date.now()}`, label: 'Nouveau Lien', link: '/', icon: 'SparklesIcon' };
+        const newLink: MegaMenuLink = { id: `link-${Date.now()}`, text: 'Nouveau Lien', url: '/' };
         const newColumns = [...megaMenu.columns];
         newColumns[colIndex].links.push(newLink);
         setMegaMenu({ ...megaMenu, columns: newColumns });
@@ -97,10 +97,10 @@ const AdminMegaMenuManagement: React.FC = () => {
                             {column.links.map((link, linkIndex) => (
                                 <div key={link.id} className="p-2 bg-black/5 dark:bg-white/5 rounded-lg space-y-2">
                                     <div className="flex items-center gap-2">
-                                        <input type="text" value={link.label} onChange={e => handleLinkChange(colIndex, linkIndex, 'label', e.target.value)} className="input-style flex-grow" placeholder="Label" />
+                                        <input type="text" value={link.text} onChange={e => handleLinkChange(colIndex, linkIndex, 'text', e.target.value)} className="input-style flex-grow" placeholder="Label" />
                                         <button onClick={() => removeLink(colIndex, linkIndex)} className="p-1 text-red-500"><TrashIcon className="w-4 h-4" /></button>
                                     </div>
-                                    <UrlSelector value={link.link} onChange={value => handleLinkChange(colIndex, linkIndex, 'link', value)} />
+                                    <UrlSelector value={link.url} onChange={value => handleLinkChange(colIndex, linkIndex, 'url', value)} />
                                 </div>
                             ))}
                             <button onClick={() => addLink(colIndex)} className="w-full btn-secondary text-sm mt-2">Ajouter un lien</button>

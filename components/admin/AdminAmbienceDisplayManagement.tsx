@@ -29,7 +29,7 @@ const AdminAmbienceDisplayManagement: React.FC = () => {
     const addCategoryToDisplay = (categoryId: number) => {
         const category = ambienceCategories.find(c => c.id === categoryId);
         if (category && !settings.categories.some(c => c.id === categoryId)) {
-            const newCategory = { id: category.id, name: category.name, image: category.image.url };
+            const newCategory = { id: category.id, name: category.name, image: category.image.url, enabled: true };
             handleCategoryOrderChange([...settings.categories, newCategory]);
         }
     };
