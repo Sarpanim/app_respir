@@ -22,7 +22,8 @@ export type View =
   | 'invite-friend'
   | 'ambience-player'
   | 'player-view'
-  | 'settings';
+  | 'settings'
+  | 'my-courses';
 
 export type AdminView =
   | 'dashboard'
@@ -61,13 +62,17 @@ export type AdminView =
   | 'homeMentors'
   | 'navigation'
   | 'siteMap'
-  | 'ambienceDisplayManagement';
+  | 'ambienceDisplayManagement'
+  | 'course-detail'
+  | 'emailCampaignDetail'
+  | 'emailCampaignEditor';
 
 
 export interface ImageSettings {
   url: string;
+  alt: string;
   ratio: string;
-  position: 'top' | 'center' | 'bottom';
+  position: 'top' | 'center' | 'bottom' | 'left' | 'right' | 'background';
   objectPosition?: 'top' | 'center' | 'bottom';
 }
 
@@ -80,6 +85,7 @@ export interface Lesson {
   content?: string;
   coverImage?: ImageSettings;
   attachments?: Attachment[];
+  position: number;
 }
 
 export interface Attachment {
@@ -92,7 +98,10 @@ export interface Section {
   id: string;
   title: string;
   lessons: Lesson[];
+  position: number;
 }
+
+export type ReviewStatus = 'En attente' | 'Approuvé' | 'Rejeté';
 
 export interface Review {
   id: string;
@@ -107,8 +116,6 @@ export interface Review {
   status: ReviewStatus;
   featuredOnHomepage?: boolean;
 }
-
-export type ReviewStatus = 'En attente' | 'Approuvé';
 
 export interface Mentor {
   name: string;
@@ -134,6 +141,8 @@ export interface Course {
   mentor: Mentor;
   about?: string;
   createdAt?: string;
+  totalDuration: number;
+  lessonCount: number;
 }
 
 export interface Category {
@@ -183,16 +192,16 @@ export interface SubscriptionPlan {
 }
 
 export interface PromoCode {
-    id: number;
+    id: string;
     code: string;
     type: 'percentage' | 'fixed';
     value: number;
     status: 'active' | 'inactive';
     usageCount: number;
     usageLimit: number | null;
-    startDate: string;
-    endDate: string;
-    applicablePlanIds: 'all' | SubscriptionPlanId[];
+    startDate: string | null;
+    endDate: string | null;
+    applicablePlanIds: SubscriptionPlanId[];
     textColor?: string;
 }
 
@@ -374,6 +383,8 @@ export interface DiscoverPageSettings {
 export interface AmbienceCategorySetting {
     id: number;
     enabled: boolean;
+    name: string;
+    image: string;
 }
 
 export interface HomepageImageText {
@@ -439,12 +450,7 @@ export interface HomepageQuote {
 
 export interface HomepageSlide {
     id: string;
-    image: {
-        url: string;
-        position: 'left' | 'right' | 'background';
-        ratio: string;
-        objectPosition: 'top' | 'center' | 'bottom';
-    };
+    image: ImageSettings;
     title: string;
     subtitle: string;
     textAlign: 'left' | 'center' | 'right';
@@ -574,6 +580,24 @@ export interface EmailCampaign {
     status: 'Envoyé' | 'Programmé' | 'Brouillon' | 'Échec';
     openRate?: number;
     clickRate?: number;
+    recipientCount: number;
 }
 
 export type PageSettings = { [key in View]?: { showHeader: boolean } };
+
+export interface InvoiceItem {
+    id: string;
+    description: string;
+    quantity: number;
+    price: number;
+}
+
+export interface Invoice {
+    id: string;
+    userName: string;
+    userEmail: string;
+    date: string;
+    amount: number;
+    status: 'Paid' | 'Pending' | 'Cancelled';
+    items: InvoiceItem[];
+}

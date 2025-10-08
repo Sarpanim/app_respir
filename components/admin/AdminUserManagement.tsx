@@ -36,7 +36,7 @@ const AdminUserManagement: React.FC = () => {
 
     const handleBan = (id: number) => {
         if (window.confirm('Êtes-vous sûr de vouloir bannir cet utilisateur ?')) {
-            setUsers(users.map((u: User) => u.id === id ? { ...u, status: 'Banned' } : u));
+            setUsers(users.map((u: User) => u.id === id ? { ...u, status: 'Banni' } : u));
         }
     };
     
@@ -48,7 +48,7 @@ const AdminUserManagement: React.FC = () => {
         .filter((user: User) => {
             if (filter === 'all') return true;
             if (filter === 'active') return user.status === 'Actif';
-            if (filter === 'banned') return user.status === 'Banned';
+            if (filter === 'banned') return user.status === 'Banni';
             if (filter === 'premium') return user.plan === 'premium';
             return true;
         })
@@ -60,7 +60,7 @@ const AdminUserManagement: React.FC = () => {
     const getStatusChip = (status: string) => {
         switch (status) {
             case 'Actif': return <span className="inline-flex items-center gap-1.5 py-1 px-2 rounded-md text-xs font-medium bg-green-100 text-green-800"><CheckCircleIcon className="w-3 h-3"/>Actif</span>;
-            case 'Banned': return <span className="inline-flex items-center gap-1.5 py-1 px-2 rounded-md text-xs font-medium bg-red-100 text-red-800"><NoSymbolIcon className="w-3 h-3"/>Banni</span>;
+            case 'Banni': return <span className="inline-flex items-center gap-1.5 py-1 px-2 rounded-md text-xs font-medium bg-red-100 text-red-800"><NoSymbolIcon className="w-3 h-3"/>Banni</span>;
             default: return <span className="inline-flex items-center gap-1.5 py-1 px-2 rounded-md text-xs font-medium bg-gray-100 text-gray-800">{status}</span>;
         }
     };
@@ -137,7 +137,7 @@ const AdminUserManagement: React.FC = () => {
                                         <div className="flex justify-end items-center gap-2">
                                             <button onClick={() => setSelectedUser(user)} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full"><EyeIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" /></button>
                                             <button className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full"><PencilIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" /></button>
-                                            {user.status === 'Banned' ? (
+                                            {user.status === 'Banni' ? (
                                                 <button onClick={() => handleUnban(user.id)} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full"><CheckCircleIcon className="w-5 h-5 text-green-600 dark:text-green-400" /></button>
                                             ) : (
                                                 <button onClick={() => handleBan(user.id)} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full"><NoSymbolIcon className="w-5 h-5 text-red-600 dark:text-red-400" /></button>

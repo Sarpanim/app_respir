@@ -25,6 +25,23 @@ interface AppContextType {
   currentParams: any;
   
   navigateTo: (view: View, params?: any) => void;
+  navigateToGrid: () => void;
+  navigateToDiscover: () => void;
+  navigateToPlayer: (courseId: string) => void;
+  navigateToPlayerView: () => void;
+  navigateToAmbiencePlayerView: () => void;
+  navigateToCategoryDetail: (categoryId: number) => void;
+  navigateToSettings: () => void;
+  navigateToSubscription: () => void;
+  navigateToAbout: () => void;
+  navigateToEditProfile: () => void;
+  navigateToNotifications: () => void;
+  navigateToHelpFaq: () => void;
+  navigateToContactSupport: () => void;
+  navigateToPrivacyPolicy: () => void;
+  navigateToInviteFriend: () => void;
+  navigateToAdminDashboard: () => void;
+  handleLinkNavigation: (url: string) => void;
 
   user: User;
   updateUser: (updatedUser: Partial<User>) => void;
@@ -71,7 +88,7 @@ interface AppContextType {
   navigateToAdminPage: (page: AdminView) => void;
 
   generalSettings: GeneralSettings;
-  updateGeneralSettings: (settings: GeneralSettings) => void;
+  updateGeneralSettings: (settings: Partial<GeneralSettings>) => void;
   
   mobileNavItems: NavItem[];
   updateMobileNavItems: (items: NavItem[]) => void;
@@ -167,9 +184,6 @@ const defaultGeneralSettings: GeneralSettings = {
     defaultSubscriptionCycle: 'monthly',
     subscriptionTitleFont: 'Elsie',
     subscriptionTitleColor: '#00A388',
-    headerNavItems: DEFAULT_HEADER_NAV_ITEMS,
-    mobileNavItems: DEFAULT_MOBILE_NAV_ITEMS,
-    accountMenuItems: DEFAULT_SETTINGS_MENU_ITEMS,
 };
 
 
@@ -316,6 +330,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setIsSettingsOpen(false);
   };
 
+  const navigateToGrid = () => navigateTo('grid');
+  const navigateToDiscover = () => navigateTo('discover');
+  const navigateToPlayer = (courseId: string) => navigateTo('player', { courseId });
+  const navigateToPlayerView = () => navigateTo('player-view');
+  const navigateToAmbiencePlayerView = () => navigateTo('ambience-player');
+  const navigateToCategoryDetail = (categoryId: number) => navigateTo('category-detail', { categoryId });
+  const navigateToSettings = () => navigateTo('settings');
+  const navigateToSubscription = () => navigateTo('subscription');
+  const navigateToAbout = () => navigateTo('about');
+  const navigateToEditProfile = () => navigateTo('edit-profile');
+  const navigateToNotifications = () => navigateTo('notifications');
+  const navigateToHelpFaq = () => navigateTo('help-faq');
+  const navigateToContactSupport = () => navigateTo('contact-support');
+  const navigateToPrivacyPolicy = () => navigateTo('privacy-policy');
+  const navigateToInviteFriend = () => navigateTo('invite-friend');
+  const navigateToAdminDashboard = () => navigateTo('admin', { view: 'dashboard' });
+
   const handleLinkNavigation = (url: string) => {
     if (url === '#') return;
 
@@ -401,8 +432,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       navigateTo('admin');
   };
 
-  const updateGeneralSettings = (settings: GeneralSettings) => {
-      setGeneralSettings(settings);
+  const updateGeneralSettings = (settings: Partial<GeneralSettings>) => {
+      setGeneralSettings(prev => ({...prev, ...settings}));
   };
 
   const updateMobileNavItems = (items: NavItem[]) => {
@@ -594,7 +625,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const value = {
     isAuthenticated, login, logout,
     currentView, currentParams,
-    navigateTo,
+    navigateTo, navigateToGrid, navigateToDiscover, navigateToPlayer, navigateToPlayerView, navigateToAmbiencePlayerView, navigateToCategoryDetail, navigateToSettings, navigateToSubscription, navigateToAbout, navigateToEditProfile, navigateToNotifications, navigateToHelpFaq, navigateToContactSupport, navigateToPrivacyPolicy, navigateToInviteFriend, navigateToAdminDashboard, handleLinkNavigation,
     user, updateUser, users, setUsers,
     isSettingsOpen, toggleSettings,
     showAuth, setShowAuth,

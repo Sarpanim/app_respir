@@ -68,7 +68,7 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({ course, onClose, onSa
             isLocked: false,
             audio: '',
             content: '',
-            cover_image: { url: '', alt: '' },
+            coverImage: { url: '', alt: '', ratio: '16:9', position: 'center' },
             position: editedCourse.sections.find(s => s.id === sectionId)?.lessons.length || 0
         };
         setEditedCourse(prev => prev ? {

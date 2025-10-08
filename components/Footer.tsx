@@ -3,7 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { SettingsMenuAction } from '../types';
 
 const Footer: React.FC = () => {
-    const { isAdmin, navigateToAdmin, generalSettings, ...navActions } = useAppContext();
+    const { isAdmin, navigateToAdminPage, generalSettings, ...navActions } = useAppContext();
     const { footerSettings } = generalSettings;
 
     const getActionByName = (actionName: SettingsMenuAction | null) => {
@@ -105,7 +105,7 @@ const Footer: React.FC = () => {
                 <div className="mt-12 pt-8 border-t border-black/10 dark:border-white/10 flex justify-between items-center text-xs text-gray-500">
                     <p>&copy; {new Date().getFullYear()} RESPIR. Tous droits réservés.</p>
                     {isAdmin && (
-                        <button onClick={navigateToAdmin} className="hover:text-accent font-semibold">
+                        <button onClick={() => navigateToAdminPage('dashboard')} className="hover:text-accent font-semibold">
                             Administration
                         </button>
                     )}

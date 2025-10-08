@@ -41,6 +41,7 @@ const AdminAmbienceCategoryManagement: React.FC = () => {
             name: newCategoryName.trim(),
             image: {
                 url: newCategoryImage.trim() || `https://picsum.photos/seed/ambcat${new Date().getTime()}/200`,
+                alt: newCategoryName.trim(),
                 ratio: '1:1',
                 position: 'center',
             }

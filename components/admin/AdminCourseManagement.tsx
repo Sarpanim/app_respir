@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo } from 'react';
 import AdminPageLayout from './AdminPageLayout';
 import { useCourses } from '../../context/CourseContext';
@@ -39,7 +37,7 @@ const AdminCourseManagement: React.FC = () => {
             id: uuidv4(),
             title: '',
             description: '',
-            image: { url: '', ratio: '16:9', position: 'center' },
+            image: { url: '', alt: '', ratio: '16:9', position: 'center' },
             categoryId: 1,
             level: 'Débutant',
             requiredPlan: 'free',
@@ -51,6 +49,8 @@ const AdminCourseManagement: React.FC = () => {
             studentCount: 0,
             reviews: [],
             mentor: { name: '', avatar: '', title: '' },
+            totalDuration: 0,
+            lessonCount: 0,
         });
     };
 

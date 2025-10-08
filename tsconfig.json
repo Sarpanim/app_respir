@@ -17,6 +17,6 @@
     "jsx": "react-jsx",
     "types": ["vite/client"]
   },
-  "include": ["src", "components", "context", "services", "types.ts", "constants.ts", "App.tsx", "index.tsx", "vite.config.ts", "capacitor.config.ts"],
+  "include": ["src", "components", "context", "services", "types.ts", "constants.ts", "App.tsx", "index.tsx"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

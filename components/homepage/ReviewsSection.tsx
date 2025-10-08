@@ -1,14 +1,14 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { StarIcon } from '../Icons';
-import { Review, HomepageReview } from '../../types';
 
 const ReviewsSection: React.FC = () => {
-    const { generalSettings, allReviews } = useAppContext();
-    const { reviews: customReviews, animation } = generalSettings.homepageReviews;
+    const { generalSettings, reviews: allReviews } = useAppContext();
+    const { reviews: customReviews, animation, defaultTab } = generalSettings.homepageReviews;
 
-    const courseReviews: HomepageReview[] = useMemo(() => {
+    const [activeTab, setActiveTab] = useState(defaultTab);
+
+    const courseReviews = React.useMemo(() => {
         return allReviews
             .filter(review => review.status === 'Approuvé' && review.featuredOnHomepage)
             .map(review => ({
@@ -20,48 +20,50 @@ const ReviewsSection: React.FC = () => {
             }));
     }, [allReviews]);
 
-    const activeReviews = [...customReviews, ...courseReviews];
-
-    if (activeReviews.length === 0) {
-        return null;
-    }
-
-    const displayReviews = animation.enabled && activeReviews.length > 0 ? [...activeReviews, ...activeReviews] : activeReviews;
-    
-    const animationStyle: React.CSSProperties = animation.enabled ? {
-        animation: `scroll ${animation.speed || 40}s linear infinite`,
-    } : {};
+    const displayedReviews = activeTab === 'course' ? courseReviews : customReviews;
 
     return (
-        <div className="space-y-6">
-            {activeReviews.length > 0 ? (
-                <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 overflow-hidden group" style={{ maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)' }}>
-                    <div 
-                        className="flex gap-6"
-                        style={animation.enabled ? animationStyle : {}}
-                    >
-                        {displayReviews.map((review, index) => (
-                            <div key={index} className="flex-shrink-0 w-80 bg-white/30 dark:bg-dark-card p-6 rounded-2xl border border-white/20 dark:border-transparent group-hover:[animation-play-state:paused]">
-                                <div className="flex mb-2">
-                                    {[...Array(5)].map((_, i) => (
-                                        <StarIcon key={i} className={`w-5 h-5 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'}`} />
-                                    ))}
-                                </div>
-                                <p className="italic text-gray-700 dark:text-gray-300 h-24 overflow-y-auto scrollbar-hide">"{review.comment}"</p>
-                                <div className="flex items-center justify-end gap-3 mt-4">
-                                    <p className="font-bold">- {review.author}</p>
-                                    {review.avatar && <img src={review.avatar} alt={review.author} className="w-8 h-8 rounded-full object-cover" />}
-                                </div>
-                            </div>
-                        ))}
+        <section className="py-12 md:py-20 bg-light-bg dark:bg-dark-bg">
+            <div className="container mx-auto px-4">
+                <h2 className="text-3xl md:text-4xl font-elsie font-bold text-center text-gray-800 dark:text-white mb-4">
+                    Ce que nos utilisateurs en pensent
+                </h2>
+                <div className="flex justify-center mb-8">
+                    <div className="bg-gray-200 dark:bg-gray-700 rounded-full p-1 flex items-center">
+                        <button 
+                            onClick={() => setActiveTab('custom')}
+                            className={`px-4 py-2 rounded-full text-sm font-semibold ${activeTab === 'custom' ? 'bg-white dark:bg-gray-900 shadow' : ''}`}
+                        >
+                            Avis
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('course')}
+                            className={`px-4 py-2 rounded-full text-sm font-semibold ${activeTab === 'course' ? 'bg-white dark:bg-gray-900 shadow' : ''}`}
+                        >
+                            Avis sur les cours
+                        </button>
                     </div>
                 </div>
-            ) : (
-                <div className="text-center p-8 bg-white/20 dark:bg-black/10 rounded-2xl">
-                    <p className="text-gray-500 dark:text-gray-400">Aucun avis à afficher pour le moment.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {displayedReviews.map(review => (
+                        <div key={review.id} className="bg-white dark:bg-dark-card p-6 rounded-2xl shadow-lg">
+                            <div className="flex items-center mb-4">
+                                <img src={review.avatar} alt={review.author} className="w-12 h-12 rounded-full object-cover mr-4" />
+                                <div>
+                                    <h4 className="font-bold text-gray-800 dark:text-white">{review.author}</h4>
+                                    <div className="flex items-center mt-1">
+                                        {[...Array(5)].map((_, i) => (
+                                            <StarIcon key={i} className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'}`} />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            <p className="text-gray-600 dark:text-gray-300">{review.comment}</p>
+                        </div>
+                    ))}
                 </div>
-            )}
-        </div>
+            </div>
+        </section>
     );
 };
 

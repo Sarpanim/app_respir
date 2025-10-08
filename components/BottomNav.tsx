@@ -46,7 +46,7 @@ const BottomNav: React.FC = () => {
                                 : 'text-navbar-text-inactive-light dark:text-navbar-text-inactive-dark hover:text-navbar-text-active'
                             }`}
                             aria-label={item.label}
-                            aria-current={isViewActive(item.link)}
+                            aria-current={isViewActive(item.link) ? 'page' : undefined}
                         >
                             <DynamicIcon icon={item.icon} className="w-7 h-7 mb-1" />
                             <span>{item.label}</span>

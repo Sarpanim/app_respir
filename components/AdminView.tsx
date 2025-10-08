@@ -9,7 +9,6 @@ import {
     ChatBubbleOvalLeftEllipsisIcon, QuestionMarkCircleIcon, ShieldCheckIcon, ListBulletIcon,
     ImageIcon, DevicePhoneMobileIcon, MapIcon
 } from './Icons';
-// FIX: Import AdminSubscriptionTracking to handle the 'subscriptions' view.
 import AdminSubscriptionTracking from './admin/AdminSubscriptionTracking';
 import AdminInvoiceManagement from './admin/AdminInvoiceManagement';
 import AdminUserManagement from './admin/AdminUserManagement';
@@ -65,7 +64,7 @@ const AdminDashboard: React.FC = () => {
         >
             <div className="text-accent">{icon}</div>
             <span className="font-semibold text-gray-800 dark:text-gray-100 flex-grow">{label}</span>
-            <ChevronLeftIcon className="w-5 h-5 text-gray-400 transform rotate-180" />
+            <ChevronRightIcon className="w-5 h-5 text-gray-400" />
         </button>
     );
     
