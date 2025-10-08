@@ -13,6 +13,7 @@ const slugify = (text: string) => {
         .replace(/-+$/, '');
 };
 
+const ADMIN_EMAIL = 'olivier.heqa@gmail.com';
 
 interface AppContextType {
   isAuthenticated: boolean;
@@ -172,7 +173,6 @@ const defaultGeneralSettings: GeneralSettings = {
     homepageMentors: DEFAULT_HOMEPAGE_MENTORS_SETTINGS,
     headerNavAlign: 'start',
     headerNavSpacing: 32,
-    // FIX: Add missing properties to satisfy the GeneralSettings type.
     defaultSubscriptionCycle: 'monthly',
     subscriptionTitleFont: 'Elsie',
     subscriptionTitleColor: '#00A388',
@@ -208,7 +208,7 @@ const defaultUser: User = {
     supportTickets: [],
     emailHistory: [],
     linkedAccounts: {
-        google: true,
+        google: false,
         facebook: false,
         apple: false,
     }
@@ -260,7 +260,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>(DEFAULT_PROMO_CODES);
   const [ambiences, setAmbiences] = useState<Ambience[]>(AMBIENCE_SOUNDS);
   const [ambienceCategories, setAmbienceCategories] = useState<AmbienceCategory[]>(AMBIENCE_CATEGORIES);
-  const [isAdmin, setIsAdmin] = useState(true);
+  
+  // Admin status is now determined by email
+  const isAdmin = user.email === ADMIN_EMAIL;
   const [currentAdminView, setCurrentAdminView] = useState<AdminView>('dashboard');
 
   const [generalSettings, setGeneralSettings] = useState<GeneralSettings>(defaultGeneralSettings as GeneralSettings);
@@ -300,11 +302,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return planLevels[subscriptionPlan] >= planLevels[requiredPlan];
   };
 
-  const login = () => setIsAuthenticated(true);
+  const login = () => {
+    setIsAuthenticated(true);
+    // For demo: simulate admin login
+    setUser(prev => ({ 
+      ...prev, 
+      email: ADMIN_EMAIL,
+      name: 'Olivier Heqa',
+      linkedAccounts: { ...prev.linkedAccounts, google: true }
+    }));
+  };
+  
   const logout = () => {
     setIsAuthenticated(false);
     setCurrentView('grid');
     closePlayer();
+    // Reset user to default non-admin user
+    setUser({ ...defaultUser, plan: subscriptionPlan });
   };
 
   const navigateTo = (view: View) => {
@@ -395,7 +409,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const changeSubscription = (planId: SubscriptionPlanId) => {
     setSubscriptionPlan(planId);
     setUser(prev => ({ ...prev, plan: planId }));
-    setJustSubscribedPlanId(planId); // Set the flag for the welcome message
+    setJustSubscribedPlanId(planId);
     navigateTo('profile');
   };
   
@@ -420,15 +434,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const isSubscribed = subscriptionPlan !== 'free';
 
   const navigateToAdmin = () => {
+      if (!isAdmin) return;
       setCurrentAdminView('dashboard');
       navigateTo('admin');
   };
 
   const navigateToAdminDashboard = () => {
+      if (!isAdmin) return;
       setCurrentAdminView('dashboard');
   };
 
   const navigateToAdminPage = (page: AdminView) => {
+      if (!isAdmin) return;
       setCurrentAdminView(page);
       navigateTo('admin');
   };
@@ -566,7 +583,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     if (hasCourseAccess || !lesson.isLocked) return lesson;
                 }
             }
-        } else { // 'prev'
+        } else {
              for (let i = currentLessonIndex - 1; i >= 0; i--) {
                 const lesson = currentPlayingCourse.sections[currentSectionIndex].lessons[i];
                 if (hasCourseAccess || !lesson.isLocked) return lesson;
@@ -618,7 +635,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         markLessonAsComplete(currentPlayingCourse.id, currentlyPlayingLesson.id);
         playNext();
     } else if (currentlyPlayingAmbience) {
-        // Replay ambience sound automatically
         seekAudio(0);
         setIsPlaying(true);
     }
@@ -665,7 +681,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     privacyPolicyContent, updatePrivacyPolicyContent,
     allReviews, addReview, updateReviewStatus, deleteReview, toggleReviewHomepageFeature,
     pageSettings, setPageSettings,
-    // Player values
     currentlyPlayingLesson, currentPlayingCourse, currentlyPlayingAmbience, isPlaying, audioCurrentTime, audioDuration,
     playLesson, playAmbience, togglePlayPause, seekAudio, playNext, playPrev, closePlayer,
     _seekRequest, _clearSeekRequest, _updateAudioTime, _handleAudioEnded
