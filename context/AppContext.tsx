@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { supabase } from '../integrations/supabase/client';
+import { supabase } from '../src/integrations/supabase/client';
 import { GeneralSettings, SubscriptionPlanId, NavItem, View, AdminView, AboutPageContent, TeamMember, SubscriptionPlan, PromoCode, Course, Lesson, UserProgress, Ambience, AmbienceCategory, User, NotificationSettings, FaqItem, PrivacyPolicyContent, SettingsMenuItem, ThemeColors, Review, ReviewStatus, Category, PageSettings, AmbiencePageSettings } from '../types';
 import { DEFAULT_MOBILE_NAV_ITEMS, DEFAULT_HEADER_NAV_ITEMS, DEFAULT_SUBSCRIPTION_PLANS, DEFAULT_PROMO_CODES, COURSES, AMBIENCE_SOUNDS, AMBIENCE_CATEGORIES, DEFAULT_FAQ_ITEMS, DEFAULT_PRIVACY_POLICY, DEFAULT_SETTINGS_MENU_ITEMS, DEFAULT_HOMEPAGE_SECTIONS, DEFAULT_MEGA_MENU, DEFAULT_THEME_COLORS, DEFAULT_DISCOVER_PAGE_SETTINGS, DEFAULT_FOOTER_SETTINGS, DEFAULT_HOMEPAGE_QUOTE, DEFAULT_HOMEPAGE_IMAGE_TEXT, DEFAULT_HOMEPAGE_SLIDER, DEFAULT_HOMEPAGE_REVIEWS_SETTINGS, DEFAULT_HOMEPAGE_MENTORS_SETTINGS, DEFAULT_ALL_REVIEWS, DEFAULT_HOMEPAGE_SLIDER2, DEFAULT_HOMEPAGE_SLIDER3, CATEGORIES, DEFAULT_AMBIENCE_PAGE_SETTINGS } from '../constants';
 import { v4 as uuidv4 } from 'uuid';
