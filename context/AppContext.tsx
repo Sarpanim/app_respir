@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../src/integrations/supabase/client';
 import { GeneralSettings, SubscriptionPlanId, NavItem, View, AdminView, AboutPageContent, TeamMember, SubscriptionPlan, PromoCode, Course, Lesson, UserProgress, Ambience, AmbienceCategory, User, NotificationSettings, FaqItem, PrivacyPolicyContent, SettingsMenuItem, ThemeColors, Review, ReviewStatus, Category, PageSettings, AmbiencePageSettings, Invoice, EmailCampaign } from '../types';
 import { DEFAULT_MOBILE_NAV_ITEMS, DEFAULT_HEADER_NAV_ITEMS, DEFAULT_SUBSCRIPTION_PLANS, DEFAULT_PROMO_CODES, COURSES, AMBIENCE_SOUNDS, AMBIENCE_CATEGORIES, DEFAULT_FAQ_ITEMS, DEFAULT_PRIVACY_POLICY, DEFAULT_SETTINGS_MENU_ITEMS, DEFAULT_HOMEPAGE_SECTIONS, DEFAULT_MEGA_MENU, DEFAULT_THEME_COLORS, DEFAULT_DISCOVER_PAGE_SETTINGS, DEFAULT_FOOTER_SETTINGS, DEFAULT_HOMEPAGE_QUOTE, DEFAULT_HOMEPAGE_IMAGE_TEXT, DEFAULT_HOMEPAGE_SLIDER, DEFAULT_HOMEPAGE_REVIEWS_SETTINGS, DEFAULT_HOMEPAGE_MENTORS_SETTINGS, DEFAULT_ALL_REVIEWS, DEFAULT_HOMEPAGE_SLIDER2, DEFAULT_HOMEPAGE_SLIDER3, CATEGORIES, DEFAULT_AMBIENCE_PAGE_SETTINGS, DEFAULT_INVOICES, DEFAULT_USERS, DEFAULT_EMAIL_CAMPAIGNS } from '../constants';
@@ -311,6 +312,53 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (!requiredPlan) return true;
       return planLevels[subscriptionPlan] >= planLevels[requiredPlan];
   };
+
+  const handleSessionChange = useCallback((session: Session | null) => {
+    setIsAuthenticated(!!session);
+
+    if (session?.user) {
+      const metadata = session.user.user_metadata as Record<string, any> | undefined;
+
+      setUser((prevUser) => ({
+        ...prevUser,
+        email: session.user.email ?? prevUser.email,
+        name:
+          metadata?.full_name ??
+          metadata?.name ??
+          session.user.email ??
+          prevUser.name,
+        avatar:
+          metadata?.avatar_url ??
+          metadata?.picture ??
+          prevUser.avatar,
+      }));
+    } else {
+      setUser({ ...defaultUser, plan: subscriptionPlan });
+    }
+  }, [subscriptionPlan]);
+
+  useEffect(() => {
+    const initialiseAuth = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        handleSessionChange(session);
+      } catch (error) {
+        console.error('Failed to initialise authentication state', error);
+      }
+    };
+
+    initialiseAuth();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      handleSessionChange(session);
+    });
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, [handleSessionChange]);
 
   const login = () => {
     setIsAuthenticated(true);

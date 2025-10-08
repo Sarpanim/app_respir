@@ -4,7 +4,7 @@ import { supabase } from '../src/integrations/supabase/client';
 import { EnvelopeIcon, FacebookIcon, XMarkIcon, GoogleIcon } from './Icons';
 
 const Auth: React.FC = () => {
-    const { setShowAuth } = useAppContext();
+    const { setShowAuth, login } = useAppContext();
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -18,7 +18,7 @@ const Auth: React.FC = () => {
         
         const authMethod = isLogin ? supabase.auth.signInWithPassword : supabase.auth.signUp;
         
-        const { error } = await authMethod({ email, password });
+        const { error, data } = await authMethod({ email, password });
 
         if (error) {
             setError(error.message);
@@ -26,14 +26,22 @@ const Auth: React.FC = () => {
             if (!isLogin) {
                 setMessage('Veuillez vérifier votre email pour confirmer votre inscription.');
             } else {
+                if (data?.session) {
+                    login();
+                }
                 setShowAuth(false);
             }
         }
     };
 
     const handleGoogleSignIn = async () => {
+        setError(null);
+
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
+            options: {
+                redirectTo: window.location.origin,
+            },
         });
         if (error) setError(error.message);
     };
