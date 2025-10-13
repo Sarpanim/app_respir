@@ -2,10 +2,19 @@ import React from 'react';
 import { HomepageSlide } from '../../types';
 
 interface SliderSectionProps {
-  slide: HomepageSlide;
+  slide?: HomepageSlide | null;
 }
 
 const SliderSection: React.FC<SliderSectionProps> = ({ slide }) => {
+  // Si la donnée est absente, on ne rend rien de dangereux
+  if (!slide) {
+    return (
+      <div className="w-full h-64 md:h-80 lg:h-96 bg-gray-800 flex items-center justify-center text-gray-400 rounded-2xl shadow-lg">
+        Données de diapositive manquantes
+      </div>
+    );
+  }
+
   const textAlignClasses: Record<string, string> = {
     left: 'text-left items-start',
     center: 'text-center items-center',
@@ -18,10 +27,9 @@ const SliderSection: React.FC<SliderSectionProps> = ({ slide }) => {
     bottom: 'object-bottom',
   };
 
-  // Sécurités
-  const imageUrl = slide?.image?.url || null;
-  const imagePosition = slide?.image?.objectPosition || 'center';
-  const textAlign = slide?.textAlign || 'center';
+  const imageUrl = slide.image?.url || null;
+  const imagePosition = slide.image?.objectPosition || 'center';
+  const textAlign = slide.textAlign || 'center';
 
   return (
     <div className="relative rounded-2xl overflow-hidden shadow-lg h-64 md:h-80 lg:h-96">
@@ -46,13 +54,15 @@ const SliderSection: React.FC<SliderSectionProps> = ({ slide }) => {
           textAlignClasses[textAlign] || 'text-center items-center'
         }`}
       >
-        {slide.title && (
+        {slide.title ? (
           <h2
             className="text-3xl md:text-4xl font-elsie font-bold text-white"
             style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}
           >
             {slide.title}
           </h2>
+        ) : (
+          <p className="text-gray-300 italic">Titre manquant</p>
         )}
 
         {slide.subtitle && (
