@@ -18,9 +18,10 @@ const SliderSection: React.FC<SliderSectionProps> = ({ slide }) => {
     bottom: 'object-bottom',
   };
 
-  // Sécurité : vérifier que slide et slide.image existent
+  // Sécurités
   const imageUrl = slide?.image?.url || null;
   const imagePosition = slide?.image?.objectPosition || 'center';
+  const textAlign = slide?.textAlign || 'center';
 
   return (
     <div className="relative rounded-2xl overflow-hidden shadow-lg h-64 md:h-80 lg:h-96">
@@ -42,15 +43,17 @@ const SliderSection: React.FC<SliderSectionProps> = ({ slide }) => {
 
       <div
         className={`relative h-full flex flex-col justify-end p-8 ${
-          textAlignClasses[slide.textAlign] || 'text-center items-center'
+          textAlignClasses[textAlign] || 'text-center items-center'
         }`}
       >
-        <h2
-          className="text-3xl md:text-4xl font-elsie font-bold text-white"
-          style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}
-        >
-          {slide.title}
-        </h2>
+        {slide.title && (
+          <h2
+            className="text-3xl md:text-4xl font-elsie font-bold text-white"
+            style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}
+          >
+            {slide.title}
+          </h2>
+        )}
 
         {slide.subtitle && (
           <p
