@@ -1,9 +1,9 @@
-
-
 import React, { useRef, useEffect } from 'react';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { CourseProvider } from './context/CourseContext';
+import { supabase } from './src/integrations/supabase/client';
+
 import Header from './components/Header';
 import HomepageView from './components/HomepageView';
 import Player from './components/Player';
@@ -29,52 +29,74 @@ import PrivacyPolicyView from './components/PrivacyPolicyView';
 import InviteFriendView from './components/InviteFriendView';
 import Footer from './components/Footer';
 
+/* ---------------------------- Main App Content ---------------------------- */
+
 const AppContent: React.FC = () => {
   const { theme } = useTheme();
-  const { 
+  const {
     isAuthenticated, currentView, isSettingsOpen, toggleSettings,
     currentlyPlayingLesson, currentlyPlayingAmbience, isPlaying, _seekRequest,
     _updateAudioTime, _handleAudioEnded, _clearSeekRequest, generalSettings,
-    pageSettings
+    pageSettings, setShowAuth, login
   } = useAppContext();
 
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  /* ---------- Restauration de session Supabase (Google OAuth) ---------- */
+  useEffect(() => {
+    const restoreSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (data?.session) {
+        login();
+        setShowAuth(false);
+      }
+    };
+
+    restoreSession();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        login();
+        setShowAuth(false);
+      }
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, [login, setShowAuth]);
+
+  /* -------------------------- Thème et couleurs -------------------------- */
   useEffect(() => {
     document.documentElement.className = theme;
-    const bgColor = theme === 'dark' ? generalSettings.themeColors['dark-bg'] : generalSettings.themeColors['light-bg'];
-    
+    const bgColor = theme === 'dark'
+      ? generalSettings.themeColors['dark-bg']
+      : generalSettings.themeColors['light-bg'];
+
     if (bgColor) {
-        // For theme-color meta, don't set if it's a gradient
-        if (!bgColor.includes('gradient')) {
-            document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bgColor);
-        }
-        // Apply background directly to body to support gradients
-        document.body.style.background = bgColor;
+      if (!bgColor.includes('gradient')) {
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bgColor);
+      }
+      document.body.style.background = bgColor;
     }
   }, [theme, generalSettings.themeColors]);
-  
+
   useEffect(() => {
     if (generalSettings.themeColors) {
-        const root = document.documentElement;
-        for (const [key, value] of Object.entries(generalSettings.themeColors)) {
-            root.style.setProperty(`--color-${key}`, value);
-        }
+      const root = document.documentElement;
+      for (const [key, value] of Object.entries(generalSettings.themeColors)) {
+        root.style.setProperty(`--color-${key}`, value);
+      }
     }
   }, [generalSettings.themeColors]);
 
   useEffect(() => {
-    if(isSettingsOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    }
+    if (isSettingsOpen) document.body.style.overflow = 'hidden';
+    else document.body.style.overflow = '';
+    return () => { document.body.style.overflow = ''; };
   }, [isSettingsOpen]);
 
-  // --- Global Audio Player Logic ---
+  /* ----------------------------- Audio Player ----------------------------- */
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -82,50 +104,45 @@ const AppContent: React.FC = () => {
     const source = currentlyPlayingLesson?.audio || currentlyPlayingAmbience?.audio;
 
     if (source) {
-        const isNewSource = !audio.src.endsWith(source);
-        if (isNewSource) {
-            audio.src = source;
-        }
+      const isNewSource = !audio.src.endsWith(source);
+      if (isNewSource) audio.src = source;
 
-        if (isPlaying) {
-            const playPromise = audio.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    // Ignore AbortError which is common when playback is interrupted
-                    if (error.name !== 'AbortError') {
-                        console.error("Audio playback failed", error);
-                    }
-                });
-            }
-        } else {
-            audio.pause();
+      if (isPlaying) {
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            if (error.name !== 'AbortError') console.error('Audio playback failed', error);
+          });
         }
-    } else {
+      } else {
         audio.pause();
-        audio.src = '';
+      }
+    } else {
+      audio.pause();
+      audio.src = '';
     }
   }, [isPlaying, currentlyPlayingLesson, currentlyPlayingAmbience]);
 
   useEffect(() => {
     const audio = audioRef.current;
     if (audio && _seekRequest !== null) {
-        audio.currentTime = _seekRequest;
-        _clearSeekRequest();
+      audio.currentTime = _seekRequest;
+      _clearSeekRequest();
     }
-  }, [_seekRequest]);
-  
+  }, [_seekRequest, _clearSeekRequest]);
+
   const handleTimeUpdate = () => {
     if (audioRef.current) {
-        _updateAudioTime(audioRef.current.currentTime, audioRef.current.duration);
+      _updateAudioTime(audioRef.current.currentTime, audioRef.current.duration);
     }
   };
 
-  if (!isAuthenticated) {
-    return <Auth />;
-  }
-  
+  /* ----------------------------- Auth Check ----------------------------- */
+  if (!isAuthenticated) return <Auth />;
+
+  /* -------------------------- View Dispatcher -------------------------- */
   const renderMainContent = () => {
-    switch(currentView) {
+    switch (currentView) {
       case 'grid': return <HomepageView />;
       case 'player': return <Player />;
       case 'discover': return <DiscoverView />;
@@ -148,16 +165,22 @@ const AppContent: React.FC = () => {
   };
 
   const showChrome = pageSettings[currentView]?.showHeader ?? true;
-  
+
+  /* ------------------------------- Layout ------------------------------- */
   return (
     <>
-      <audio ref={audioRef} onTimeUpdate={handleTimeUpdate} onLoadedMetadata={handleTimeUpdate} onEnded={_handleAudioEnded} />
-      
+      <audio
+        ref={audioRef}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleTimeUpdate}
+        onEnded={_handleAudioEnded}
+      />
+
       {showChrome ? (
         <div className="min-h-screen font-lato transition-colors duration-300">
-          <div 
-            className="fixed inset-0 bg-cover bg-center opacity-20 dark:opacity-10" 
-            style={{backgroundImage: "url('/grain-texture.png')"}}
+          <div
+            className="fixed inset-0 bg-cover bg-center opacity-20 dark:opacity-10"
+            style={{ backgroundImage: "url('/grain-texture.png')" }}
           ></div>
           <div className="relative z-10 flex flex-col min-h-screen">
             <Header />
@@ -178,6 +201,8 @@ const AppContent: React.FC = () => {
     </>
   );
 };
+
+/* ------------------------------- Root App ------------------------------- */
 
 const App: React.FC = () => {
   return (
