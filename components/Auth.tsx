@@ -32,31 +32,16 @@ const Auth: React.FC = () => {
 
   const handleGoogleSignIn = async () => {
     try {
-      const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-      if (!googleClientId) {
-        console.error('Google Client ID manquant');
-        setError("La configuration Google OAuth est incomplète.");
-        return;
-      }
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: window.location.origin, // ex: https://respir.app
-          queryParams: {
-            client_id: googleClientId,
-            access_type: 'offline',
-            prompt: 'consent',
-          },
         },
       });
-
       if (error) throw error;
-
-      console.log('Redirection OAuth:', data?.url);
     } catch (err: any) {
       console.error(err.message);
-      setError(err.message);
+      setError("Échec de la connexion Google. Vérifie ta configuration Supabase/Google Cloud.");
     }
   };
 
