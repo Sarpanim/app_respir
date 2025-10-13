@@ -312,9 +312,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return planLevels[subscriptionPlan] >= planLevels[requiredPlan];
   };
 
-  const login = () => {
-    setIsAuthenticated(true);
-  };
+ const login = () => {
+  setIsAuthenticated(true);
+  navigateTo('grid'); // Redirige vers la page d’accueil
+};
   
   const logout = async () => {
     await supabase.auth.signOut();
